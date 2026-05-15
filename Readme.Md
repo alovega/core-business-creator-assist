@@ -1,0 +1,1 @@
+Build a stable, practical, revenue-generating MVP focused on helping African SMEs automate communication, customer engagement, bookings, and payment workflows primarily through WhatsApp.
