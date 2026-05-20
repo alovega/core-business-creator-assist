@@ -3,7 +3,12 @@ from flask import Flask
 
 from app.common import health_bp
 from app.common.logging import setup_logging
-from app.config import config_by_name, get_config_name
+from app.config import (
+    ConfigurationError,
+    config_by_name,
+    get_config_name,
+    log_configuration_error,
+)
 from app.extensions import celery, db, init_celery, init_redis, migrate
 
 load_dotenv()
@@ -43,11 +48,23 @@ def create_app(config_name: str | None = None) -> Flask:
     if config_name is None:
         config_name = get_config_name()
 
-    app = Flask(__name__)
-    app.config.from_object(config_by_name[config_name])
+    if config_name not in config_by_name:
+        error = ConfigurationError(
+            f"Unknown FLASK_ENV '{config_name}'. "
+            f"Expected one of: {', '.join(config_by_name)}"
+        )
+        log_configuration_error(error)
+        raise error
 
-    if config_name == "production" and not app.config.get("SQLALCHEMY_DATABASE_URI"):
-        raise RuntimeError("DATABASE_URL environment variable is required in production")
+    config_class = config_by_name[config_name]
+    try:
+        config_class.validate()
+    except ConfigurationError as exc:
+        log_configuration_error(exc)
+        raise
+
+    app = Flask(__name__)
+    app.config.from_object(config_class)
 
     setup_logging(app)
 
