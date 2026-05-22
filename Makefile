@@ -1,4 +1,4 @@
-.PHONY: help install env up down test-db migrate migrate-create test run celery health setup logs
+.PHONY: help install env build up up-api down test-db migrate migrate-create test run celery health setup logs
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -22,11 +22,18 @@ install: ## Create virtualenv and install Python dependencies
 env: ## Copy backend/.env.example to backend/.env if missing
 	@test -f $(BACKEND)/.env || cp $(BACKEND)/.env.example $(BACKEND)/.env
 
+build: env ## Build the API Docker image
+	docker compose build api
+
 up: ## Start PostgreSQL and Redis (docker compose)
+	docker compose up -d postgres redis
+	@$(MAKE) test-db
+
+up-api: build ## Start PostgreSQL, Redis, and the Flask API container
 	docker compose up -d
 	@$(MAKE) test-db
 
-down: ## Stop PostgreSQL and Redis
+down: ## Stop all Docker Compose services
 	docker compose down
 
 test-db: ## Create test database if it does not exist
@@ -50,7 +57,7 @@ run: install env up migrate ## Run the Flask API server
 celery: install env up ## Run the Celery worker
 	cd $(BACKEND) && ../$(CELERY) -A celery_worker.celery worker --loglevel=info
 
-health: ## Check API health (server must be running)
+health: ## Check API health (local `make run` or `make up-api`)
 	@curl -sf http://127.0.0.1:5000/health | python3 -m json.tool
 
 logs: ## Follow docker compose logs

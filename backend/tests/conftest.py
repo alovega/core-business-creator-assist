@@ -5,7 +5,8 @@ from app.extensions import db
 
 
 @pytest.fixture
-def app():
+def app(tmp_path, monkeypatch):
+    monkeypatch.setenv("LOG_DIR", str(tmp_path / "logs"))
     application = create_app("testing")
     with application.app_context():
         db.create_all()

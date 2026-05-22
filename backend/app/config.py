@@ -42,12 +42,9 @@ def _env_bool(key: str, default: bool = False) -> bool:
 
 def log_configuration_error(error: ConfigurationError) -> None:
     """Emit a clear error log before the process exits on invalid configuration."""
-    if not logging.getLogger().handlers:
-        logging.basicConfig(
-            level=logging.ERROR,
-            format="%(asctime)s %(levelname)s %(name)s %(message)s",
-        )
-    logger.error("Application startup aborted: %s", error)
+    from app.common.logging import log_startup_error
+
+    log_startup_error(f"Application startup aborted: {error}", exc=error)
 
 
 class BaseConfig:
@@ -85,6 +82,7 @@ class BaseConfig:
 
     FRONTEND_URL = ""
 
+    LOG_DIR = "logs"
     LOG_LEVEL = "INFO"
     LOG_JSON = True
 
@@ -120,6 +118,7 @@ class BaseConfig:
         cls.STORAGE_LOCAL_PATH = _env("STORAGE_LOCAL_PATH", "uploads")
 
         cls.FRONTEND_URL = _env("FRONTEND_URL")
+        cls.LOG_DIR = _env("LOG_DIR", "logs")
         cls.LOG_LEVEL = _env("LOG_LEVEL", "INFO")
         cls.LOG_JSON = _env_bool("LOG_JSON", True)
 
@@ -197,6 +196,7 @@ class TestingConfig(BaseConfig):
         cls.CELERY_BROKER_URL = cls.REDIS_URL
         cls.CELERY_RESULT_BACKEND = cls.REDIS_URL
         cls.FRONTEND_URL = "http://localhost:3000"
+        cls.LOG_DIR = _env("LOG_DIR", "logs")
         cls.LOG_LEVEL = _env("LOG_LEVEL", "INFO")
         cls.LOG_JSON = False
 
