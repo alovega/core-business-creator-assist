@@ -20,6 +20,7 @@ def register_blueprints(app: Flask) -> None:
     from app.automations import automations_bp
     from app.bookings import bookings_bp
     from app.businesses import businesses_bp
+    from app.businesses import routes as _business_routes  # noqa: F401
     from app.conversations import conversations_bp
     from app.customers import customers_bp
     from app.leads import leads_bp
@@ -74,6 +75,7 @@ def create_app(config_name: str | None = None) -> Flask:
     init_celery(app, celery)
 
     # Import models so Flask-Migrate discovers them.
+    from app.businesses import models as business_models  # noqa: F401
     from app.users import models as user_models  # noqa: F401
 
     register_blueprints(app)

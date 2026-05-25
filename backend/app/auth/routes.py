@@ -32,7 +32,6 @@ def register():
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
     role = (data.get("role") or "user").strip() or "user"
-    business_id = data.get("business_id")
 
     if not name:
         return _validation_error("Name is required")
@@ -46,7 +45,6 @@ def register():
         email=email,
         password_hash=hash_password(password),
         role=role,
-        business_id=business_id,
         is_active=True,
     )
     db.session.add(user)
