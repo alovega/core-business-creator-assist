@@ -11,7 +11,10 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), nullable=False, default="user")
-    business_id = db.Column(db.Integer, nullable=True, index=True)
+    business_id = db.Column(
+        db.Integer, db.ForeignKey("businesses.id"), nullable=True, index=True
+    )
+    business = db.relationship("Business", back_populates="users")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(
