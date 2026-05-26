@@ -86,6 +86,10 @@ class BaseConfig:
     LOG_LEVEL = "INFO"
     LOG_JSON = True
 
+    # Dev server auto-reload (see run.py / gunicorn.conf.py; off in production).
+    USE_RELOADER = False
+    USE_DEBUGGER = False
+
     @classmethod
     def refresh_from_env(cls) -> None:
         redis_url = _env("REDIS_URL", "redis://localhost:6379/0")
@@ -166,6 +170,8 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
+    USE_RELOADER = True
+    USE_DEBUGGER = True
 
     @classmethod
     def refresh_from_env(cls) -> None:
@@ -178,6 +184,8 @@ class DevelopmentConfig(BaseConfig):
         )
         cls.FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:3000")
         cls.LOG_JSON = _env_bool("LOG_JSON", False)
+        cls.USE_RELOADER = _env_bool("FLASK_USE_RELOADER", True)
+        cls.USE_DEBUGGER = _env_bool("FLASK_USE_DEBUGGER", True)
 
 
 class TestingConfig(BaseConfig):

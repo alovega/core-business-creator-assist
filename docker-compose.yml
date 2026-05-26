@@ -40,6 +40,8 @@ services:
       RUN_MIGRATIONS: "true"
       LOG_DIR: /logs
     volumes:
+      # Mount source so code and config changes apply with Gunicorn reload (development).
+      - ./backend:/app
       - ./logs:/logs
     ports:
       - "5000:5000"

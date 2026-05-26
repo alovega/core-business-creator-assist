@@ -1,20 +1,21 @@
 from celery import Celery
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 import redis
 
-db = SQLAlchemy()
-migrate = Migrate()
 celery = Celery("business_creator")
 redis_client: redis.Redis | None = None
 
 
 def init_redis(app) -> redis.Redis:
     global redis_client
-    redis_client = redis.from_url(
-        app.config["REDIS_URL"],
-        decode_responses=True,
-    )
+    if app.config.get("TESTING"):
+        import fakeredis
+
+        redis_client = fakeredis.FakeRedis(decode_responses=True)
+    else:
+        redis_client = redis.from_url(
+            app.config["REDIS_URL"],
+            decode_responses=True,
+        )
     return redis_client
 
 

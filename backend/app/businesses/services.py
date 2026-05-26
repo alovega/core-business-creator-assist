@@ -13,7 +13,7 @@ def slugify(name: str) -> str:
 def unique_slug(base_slug: str) -> str:
     slug = base_slug
     suffix = 2
-    while Business.query.filter_by(slug=slug).first() is not None:
+    while Business.get(slug=slug) is not None:
         slug = f"{base_slug}-{suffix}"
         suffix += 1
     return slug

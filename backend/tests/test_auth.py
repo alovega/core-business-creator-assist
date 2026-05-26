@@ -1,24 +1,8 @@
 import pytest
 
-from app import create_app
 from app.auth.services import create_password_reset_token
-from app.extensions import db
 from app.users.models import User
-
-
-@pytest.fixture
-def app():
-    application = create_app("testing")
-    with application.app_context():
-        db.create_all()
-        yield application
-        db.session.remove()
-        db.drop_all()
-
-
-@pytest.fixture
-def client(app):
-    return app.test_client()
+from pony.orm import commit, db_session
 
 
 def register_user(client, **overrides):
@@ -50,7 +34,7 @@ class TestRegister:
         data = response.get_json()
         assert data["user"]["email"] == "new@example.com"
         assert data["user"]["name"] == "Jane Doe"
-        assert data["user"]["role"] == "user"
+        assert data["user"]["role"] is None
         assert data["user"]["is_active"] is True
         assert "password" not in data["user"]
         assert "password_hash" not in data["user"]
@@ -64,6 +48,32 @@ class TestRegister:
     def test_register_short_password(self, client):
         response = register_user(client, password="short", email="short@example.com")
         assert response.status_code == 400
+        body = response.get_json()
+        assert body["errors"]["password"] == "Password must be at least 8 characters long"
+
+    def test_register_missing_name(self, client):
+        response = register_user(client, name="", email="noname@example.com")
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["name"] == "Name is required"
+
+    def test_register_missing_email(self, client):
+        response = register_user(client, email="")
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["email"] == "Email is required"
+
+    def test_register_missing_password(self, client):
+        response = register_user(client, password="", email="nopass@example.com")
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["password"] == "Password is required"
+
+    def test_register_multiple_validation_errors(self, client):
+        response = register_user(client, name="", email="", password="")
+        assert response.status_code == 400
+        errors = response.get_json()["errors"]
+        assert errors["name"] == "Name is required"
+        assert errors["email"] == "Email is required"
+        assert errors["password"] == "Password is required"
+        assert response.get_json()["error"] == "Please correct the errors below."
 
 
 class TestLogin:
@@ -83,13 +93,42 @@ class TestLogin:
             json={"email": "jane@example.com", "password": "wrongpassword"},
         )
         assert response.status_code == 401
-        assert response.get_json()["error"] == "Invalid credentials"
+        assert "Invalid email or password" in response.get_json()["error"]
+
+    def test_login_missing_email(self, client):
+        response = client.post("/api/auth/login", json={"password": "securepass123"})
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["email"] == "Email is required"
+
+    def test_login_missing_password(self, client):
+        response = client.post("/api/auth/login", json={"email": "jane@example.com"})
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["password"] == "Password is required"
+
+    def test_login_missing_email_and_password(self, client):
+        response = client.post("/api/auth/login", json={})
+        assert response.status_code == 400
+        errors = response.get_json()["errors"]
+        assert errors["email"] == "Email is required"
+        assert errors["password"] == "Password is required"
+
+    def test_login_accepts_username_alias(self, client, registered_user):
+        response = client.post(
+            "/api/auth/login",
+            json={"username": "jane@example.com", "password": "securepass123"},
+        )
+        assert response.status_code == 200
 
     def test_login_inactive_user(self, client, app, registered_user):
         with app.app_context():
-            user = User.query.filter_by(email="jane@example.com").one()
-            user.is_active = False
-            db.session.commit()
+
+            @db_session
+            def deactivate():
+                user = User.get(email="jane@example.com")
+                user.is_active = False
+                commit()
+
+            deactivate()
 
         response = client.post(
             "/api/auth/login",
@@ -119,9 +158,14 @@ class TestProtectedEndpoints:
     def test_me_blocks_inactive_user(self, client, app, registered_user):
         user, token = registered_user
         with app.app_context():
-            db_user = db.session.get(User, user["id"])
-            db_user.is_active = False
-            db.session.commit()
+
+            @db_session
+            def deactivate():
+                db_user = User.get(id=user["id"])
+                db_user.is_active = False
+                commit()
+
+            deactivate()
 
         response = client.get("/api/auth/me", headers=auth_headers(token))
         assert response.status_code == 403
@@ -135,7 +179,9 @@ class TestLogout:
 
         me_response = client.get("/api/auth/me", headers=auth_headers(token))
         assert me_response.status_code == 401
-        assert me_response.get_json()["error"] == "Token revoked"
+        body = me_response.get_json()
+        assert body["error"] == "AUTH_REQUIRED"
+        assert body["message"] == "Token revoked"
 
 
 class TestPasswordReset:
@@ -180,6 +226,14 @@ class TestPasswordReset:
             json={"token": "invalid-token", "password": "newsecurepass123"},
         )
         assert response.status_code == 400
+
+    def test_reset_password_requires_password(self, client):
+        response = client.post(
+            "/api/auth/reset-password",
+            json={"token": "some-token", "password": ""},
+        )
+        assert response.status_code == 400
+        assert response.get_json()["errors"]["password"] == "Password is required"
 
     def test_reset_token_is_single_use(self, client, app, registered_user):
         user, _ = registered_user

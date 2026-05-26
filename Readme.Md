@@ -36,6 +36,10 @@ make up-api
 
 The server listens on [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
+In **development** (`FLASK_ENV=development`), both `make run` and `make up-api` auto-reload when you change Python files, `backend/app/config.py`, or `backend/.env`. Set `FLASK_USE_RELOADER=false` in `backend/.env` to disable reload. Production/staging do not reload.
+
+On startup (`make run`, `make up-api`), the app creates the Postgres database if missing, then applies pending migrations (Solaris-style). Disable migrations with `RUN_MIGRATIONS=false` in `backend/.env`.
+
 **Check health** (in another terminal)
 
 ```bash
@@ -72,8 +76,8 @@ make down
 | `make build` | Build the API Docker image |
 | `make up-api` | Start PostgreSQL, Redis, and the Flask API in Docker |
 | `make down` | Stop PostgreSQL and Redis |
-| `make migrate` | Apply database migrations |
-| `make migrate-create MSG="..."` | Generate a new migration after model changes |
+| `make migrate` | Apply pending database migrations |
+| `make create_migration name="..."` | Create a new migration file to edit manually |
 | `make test` | Run pytest |
 | `make run` | Start the Flask API |
 | `make celery` | Start the Celery worker |
@@ -88,12 +92,15 @@ make down
 make migrate
 ```
 
-**After editing SQLAlchemy models**
+**After editing Pony ORM entities**
 
 ```bash
-make migrate-create MSG="add bookings table"
+make create_migration name=add_bookings_table
+# edit backend/app/migrations/versions/<timestamp>_add_bookings_table.py
 make migrate
 ```
+
+See `backend/app/migrations/README.md` for migration helpers (`add_column`, `create_table_from_model`, etc.).
 
 **Reset only Docker services** (data volumes are kept unless you remove them manually)
 
