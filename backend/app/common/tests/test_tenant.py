@@ -1,38 +1,13 @@
+from pony.orm import commit, db_session
+
 from app.auth.services import decode_access_token
+from app.testing.helpers import create_business
 from app.common.tenant import (
     BUSINESS_ID_HEADER,
     ensure_default_current_business,
     resolve_current_business,
 )
-from pony.orm import commit, db_session
-
-
-def register_user(client, **overrides):
-    payload = {
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "password": "securepass123",
-    }
-    payload.update(overrides)
-    return client.post("/api/auth/register", json=payload)
-
-
-def auth_headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
-
-
-def create_business(client, token, **overrides):
-    payload = {
-        "name": "Acme Corp",
-        "phone_number": "+1234567890",
-        "industry": "retail",
-    }
-    payload.update(overrides)
-    return client.post(
-        "/api/businesses",
-        json=payload,
-        headers=auth_headers(token),
-    )
+from app.testing.helpers import auth_headers, register_user
 
 
 class TestLoginWorkspaceContext:

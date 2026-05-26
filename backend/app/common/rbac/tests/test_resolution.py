@@ -41,7 +41,7 @@ def test_seeded_role_permission_map(app):
 
 
 def test_membership_resolves_permissions_through_role(client):
-    from tests.test_rbac import create_business, register_user
+    from app.testing.helpers import create_business, register_user
 
     response = register_user(client, email="resolver@example.com")
     token = response.get_json()["access_token"]

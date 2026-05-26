@@ -1,30 +1,9 @@
 import pytest
-
-from app.auth.services import create_password_reset_token
-from app.users.models import User
 from pony.orm import commit, db_session
 
-
-def register_user(client, **overrides):
-    payload = {
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "password": "securepass123",
-    }
-    payload.update(overrides)
-    return client.post("/api/auth/register", json=payload)
-
-
-@pytest.fixture
-def registered_user(client):
-    response = register_user(client)
-    assert response.status_code == 201
-    data = response.get_json()
-    return data["user"], data["access_token"]
-
-
-def auth_headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+from app.auth.services import create_password_reset_token
+from app.testing.helpers import auth_headers, register_user
+from app.users.models import User
 
 
 class TestRegister:

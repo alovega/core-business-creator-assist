@@ -1,7 +1,17 @@
+"""
+Shared pytest configuration for all colocated tests under ``app/``.
+
+Module-specific tests (``app/auth/tests/``, ``app/businesses/tests/``, etc.)
+inherit these fixtures automatically; add a local ``conftest.py`` only when a
+module needs fixtures that do not belong in the shared suite.
+"""
+
 import pytest
+from pony.orm import db_session
 
 from app import create_app
 from app.db import db
+from app.testing.helpers import create_business, register_user
 
 
 @pytest.fixture
@@ -21,8 +31,6 @@ def client(app):
 @pytest.fixture(autouse=True)
 def clean_database():
     """Isolate tests on the shared in-memory Pony database."""
-    from pony.orm import db_session
-
     from app.common.rbac.permissions import clear_permission_cache
 
     @db_session
@@ -53,3 +61,26 @@ def clean_database():
 
     yield
     _clean()
+
+
+@pytest.fixture
+def auth_token(client):
+    response = register_user(client)
+    assert response.status_code == 201
+    return response.get_json()["access_token"]
+
+
+@pytest.fixture
+def registered_user(client):
+    response = register_user(client)
+    assert response.status_code == 201
+    data = response.get_json()
+    return data["user"], data["access_token"]
+
+
+@pytest.fixture
+def owner_client(client):
+    response = register_user(client, email="owner@example.com")
+    token = response.get_json()["access_token"]
+    create_business(client, token)
+    return client, token

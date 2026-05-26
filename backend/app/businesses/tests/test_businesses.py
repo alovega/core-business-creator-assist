@@ -1,42 +1,8 @@
-import pytest
 from pony.orm import db_session
 
+from app.testing.helpers import create_business
+from app.testing.helpers import auth_headers, register_user
 from app.users.models import User
-
-
-def register_user(client, **overrides):
-    payload = {
-        "name": "Jane Doe",
-        "email": "jane@example.com",
-        "password": "securepass123",
-    }
-    payload.update(overrides)
-    return client.post("/api/auth/register", json=payload)
-
-
-def auth_headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
-
-
-@pytest.fixture
-def auth_token(client):
-    response = register_user(client)
-    assert response.status_code == 201
-    return response.get_json()["access_token"]
-
-
-def create_business(client, token, **overrides):
-    payload = {
-        "name": "Acme Corp",
-        "phone_number": "+1234567890",
-        "industry": "retail",
-    }
-    payload.update(overrides)
-    return client.post(
-        "/api/businesses",
-        json=payload,
-        headers=auth_headers(token),
-    )
 
 
 class TestCreateBusiness:
