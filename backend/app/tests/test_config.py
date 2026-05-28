@@ -3,14 +3,19 @@ import logging
 import pytest
 
 from app import create_app
-from app.config import ConfigurationError, ProductionConfig, _SETTING_ENV_MAP
+from app.config import (
+    ConfigurationError,
+    DevelopmentConfig,
+    ProductionConfig,
+    TestingConfig,
+    _SETTING_ENV_MAP,
+)
 
 
 def test_development_uses_env_defaults(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
-    app = create_app("development")
-    assert app.config["DEBUG"] is True
-    assert "business_creator" in app.config["SQLALCHEMY_DATABASE_URI"]
+    DevelopmentConfig.refresh_from_env()
+    assert "business_creator" in DevelopmentConfig.SQLALCHEMY_DATABASE_URI
 
 
 def test_testing_uses_separate_database_config(monkeypatch):
@@ -19,10 +24,9 @@ def test_testing_uses_separate_database_config(monkeypatch):
         "postgresql://postgres:postgres@localhost:5432/custom_test_db",
     )
     monkeypatch.setenv("TEST_REDIS_URL", "redis://localhost:6379/9")
-    app = create_app("testing")
-    assert app.config["TESTING"] is True
-    assert app.config["SQLALCHEMY_DATABASE_URI"].endswith("custom_test_db")
-    assert app.config["REDIS_URL"] == "redis://localhost:6379/9"
+    TestingConfig.refresh_from_env()
+    assert TestingConfig.SQLALCHEMY_DATABASE_URI.endswith("custom_test_db")
+    assert TestingConfig.REDIS_URL == "redis://localhost:6379/9"
 
 
 def test_production_fails_when_required_config_missing(monkeypatch, caplog):

@@ -111,22 +111,26 @@ def _attach_file_handlers(
     log_level: int,
 ) -> None:
     json_formatter = _make_formatter(use_json=True)
-    root.addHandler(
-        _rotating_file_handler(
-            log_dir / INFO_LOG_NAME,
-            logging.INFO,
-            json_formatter,
-            _InfoLogFilter(),
-        )
+    handler_specs = (
+        (log_dir / INFO_LOG_NAME, _InfoLogFilter()),
+        (log_dir / ERROR_LOG_NAME, _ErrorLogFilter()),
     )
-    root.addHandler(
-        _rotating_file_handler(
-            log_dir / ERROR_LOG_NAME,
-            logging.INFO,
-            json_formatter,
-            _ErrorLogFilter(),
-        )
-    )
+    for path, log_filter in handler_specs:
+        try:
+            root.addHandler(
+                _rotating_file_handler(
+                    path,
+                    logging.INFO,
+                    json_formatter,
+                    log_filter,
+                )
+            )
+        except OSError as exc:
+            logging.getLogger("app.logging").warning(
+                "file_logging_disabled_for_path path=%s error=%s",
+                path,
+                exc,
+            )
     root.setLevel(log_level)
 
 
@@ -169,7 +173,6 @@ def log_startup_error(message: str, *, exc: BaseException | None = None) -> None
         stderr_handler = logging.StreamHandler(sys.stderr)
         stderr_handler.setLevel(logging.ERROR)
         stderr_handler.setFormatter(_make_formatter(use_json=False))
-        root.handlers.clear()
         root.addHandler(stderr_handler)
         _attach_file_handlers(root, log_dir, log_level=logging.ERROR)
 

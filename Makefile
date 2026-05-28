@@ -1,4 +1,4 @@
-.PHONY: help install env build up up-api down test-db migrate migrate-create test run celery health setup logs
+.PHONY: help install env build up up-api down ensure-db test-db drop-test-db migrate create_migration test run celery health setup logs
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -27,7 +27,11 @@ build: env ## Build the API Docker image
 
 up: ## Start PostgreSQL and Redis (docker compose)
 	docker compose up -d postgres redis
+	@$(MAKE) ensure-db
 	@$(MAKE) test-db
+
+ensure-db: ## Create application database if it does not exist
+	@cd $(BACKEND) && ../$(PYTHON) -c "from dotenv import load_dotenv; load_dotenv(); from app.migrations.create_db import ensure_postgres_database_from_env; ensure_postgres_database_from_env()"
 
 up-api: build ## Start PostgreSQL, Redis, and the Flask API container
 	docker compose up -d
@@ -41,18 +45,22 @@ test-db: ## Create test database if it does not exist
 		"SELECT 1 FROM pg_database WHERE datname = 'business_creator_test'" | grep -q 1 \
 		|| docker compose exec postgres psql -U postgres -c "CREATE DATABASE business_creator_test;"
 
-migrate: ## Apply database migrations
-	cd $(BACKEND) && ../$(FLASK) db upgrade
+drop-test-db: ## Drop PostgreSQL test database (business_creator_test)
+	@cd $(BACKEND) && ../$(PYTHON) -c "from dotenv import load_dotenv; load_dotenv(); from app.migrations.create_db import drop_test_database_from_env; drop_test_database_from_env()"
 
-migrate-create: ## Create a new migration (usage: make migrate-create MSG="your message")
-	@test -n "$(MSG)" || (echo 'Usage: make migrate-create MSG="describe your change"' && exit 1)
-	cd $(BACKEND) && ../$(FLASK) db migrate -m "$(MSG)"
+migrate: ## Apply pending Pony migrations
+	cd $(BACKEND) && MIGRATE_MODE=1 ../$(PYTHON) -m app.migrations.commands.run
 
-test: install up ## Run the test suite
-	cd $(BACKEND) && ../$(PYTEST)
+create_migration: ## Create migration stub (usage: make create_migration name=add_users)
+	@test -n "$(name)" || (echo 'Usage: make create_migration name=describe_your_change' && exit 1)
+	cd $(BACKEND) && ../$(PYTHON) -m app.migrations.commands.create_migration "$(name)"
 
-run: install env up migrate ## Run the Flask API server
-	cd $(BACKEND) && ../$(PYTHON) run.py
+test: install ## Run the test suite (in-memory SQLite; drops Postgres test DB if present)
+	@ec=0; (cd $(BACKEND) && ../$(PYTEST)) || ec=$$?; \
+	$(MAKE) drop-test-db; exit $$ec
+
+run: install env up ## Run the Flask API server (applies pending migrations on startup)
+	cd $(BACKEND) && FLASK_ENV=development ../$(PYTHON) run.py
 
 celery: install env up ## Run the Celery worker
 	cd $(BACKEND) && ../$(CELERY) -A celery_worker.celery worker --loglevel=info

@@ -19,7 +19,13 @@ def verify_password(password_hash: str, password: str) -> bool:
     return check_password_hash(password_hash, password)
 
 
-def create_access_token(user_id: int, jwt_secret: str, expires_seconds: int) -> tuple[str, str]:
+def create_access_token(
+    user_id: int,
+    jwt_secret: str,
+    expires_seconds: int,
+    *,
+    business_id: int | None = None,
+) -> tuple[str, str]:
     jti = secrets.token_urlsafe(16)
     now = datetime.now(timezone.utc)
     expires = now + timedelta(seconds=expires_seconds)
@@ -30,6 +36,8 @@ def create_access_token(user_id: int, jwt_secret: str, expires_seconds: int) -> 
         "iat": now,
         "type": "access",
     }
+    if business_id is not None:
+        payload["business_id"] = business_id
     token = jwt.encode(payload, jwt_secret, algorithm="HS256")
     return token, jti
 

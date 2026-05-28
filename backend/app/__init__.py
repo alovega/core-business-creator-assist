@@ -9,7 +9,8 @@ from app.config import (
     get_config_name,
     log_configuration_error,
 )
-from app.extensions import celery, db, init_celery, init_redis, migrate
+from app.db import init_database
+from app.extensions import celery, init_celery, init_redis
 
 load_dotenv()
 
@@ -41,6 +42,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(automations_bp)
     app.register_blueprint(ai_bp)
     from app.users import users_bp
+    from app.users import routes as _user_routes  # noqa: F401
 
     app.register_blueprint(users_bp)
 
@@ -69,14 +71,9 @@ def create_app(config_name: str | None = None) -> Flask:
 
     setup_logging(app)
 
-    db.init_app(app)
-    migrate.init_app(app, db)
     init_redis(app)
     init_celery(app, celery)
-
-    # Import models so Flask-Migrate discovers them.
-    from app.businesses import models as business_models  # noqa: F401
-    from app.users import models as user_models  # noqa: F401
+    init_database(app)
 
     register_blueprints(app)
 
