@@ -22,6 +22,7 @@ class Business(db.Entity):
     updated_at = Required(datetime, default=utc_now_naive)
     memberships = Set("BusinessMembership")
     customers = Set("Customer")
+    whatsapp_integrations = Set("WhatsAppIntegration")
     current_users = Set("User", reverse="current_business")
 
     def to_dict(self) -> dict:

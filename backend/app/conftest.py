@@ -40,6 +40,9 @@ def clean_database():
         clear_permission_cache()
         for table in (
             "role_permissions",
+            "messages",
+            "conversations",
+            "whatsapp_integrations",
             "customers",
             "business_memberships",
             "permissions",

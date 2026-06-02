@@ -97,6 +97,16 @@ SYSTEM_PERMISSIONS: tuple[dict, ...] = (
         "name": "View audit logs",
         "category": "audit",
     },
+    {
+        "key": "manage_whatsapp",
+        "name": "Manage WhatsApp integration",
+        "category": "whatsapp",
+    },
+    {
+        "key": "send_whatsapp_messages",
+        "name": "Send WhatsApp messages",
+        "category": "whatsapp",
+    },
 )
 
 ALL_PERMISSION_KEYS: frozenset[str] = frozenset(p["key"] for p in SYSTEM_PERMISSIONS)
@@ -116,6 +126,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
             "manage_leads",
             "manage_bookings",
             "view_dashboard",
+            "send_whatsapp_messages",
         }
     ),
     "support": frozenset(

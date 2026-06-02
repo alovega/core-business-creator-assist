@@ -34,6 +34,8 @@ class PermissionKey(StrEnum):
     MANAGE_AUTOMATIONS = "manage_automations"
     VIEW_DASHBOARD = "view_dashboard"
     VIEW_AUDIT_LOGS = "view_audit_logs"
+    MANAGE_WHATSAPP = "manage_whatsapp"
+    SEND_WHATSAPP_MESSAGES = "send_whatsapp_messages"
 
 
 def clear_permission_cache() -> None:

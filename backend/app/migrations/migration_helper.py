@@ -521,6 +521,7 @@ def discover_entity_classes() -> dict[str, type]:
     from app.businesses.models import Business, BusinessMembership
     from app.common.rbac.models import Permission, Role, RolePermission
     from app.customers.models import Customer
+    from app.whatsapp.models import WhatsAppIntegration
     from app.users.models import User
 
     return {
@@ -533,5 +534,6 @@ def discover_entity_classes() -> dict[str, type]:
             Permission,
             RolePermission,
             Customer,
+            WhatsAppIntegration,
         )
     }
