@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pony.orm import Optional, PrimaryKey, Required, Set, composite_key
 
+from app.common.time import utc_now_naive
 from app.db import db
 
 
@@ -15,8 +16,8 @@ class Role(db.Entity):
     name = Required(str, max_len=255)
     description = Optional(str)
     is_system = Required(bool, default=True)
-    created_at = Required(datetime, default=datetime.utcnow)
-    updated_at = Required(datetime, default=datetime.utcnow)
+    created_at = Required(datetime, default=utc_now_naive)
+    updated_at = Required(datetime, default=utc_now_naive)
     role_permissions = Set("RolePermission")
     memberships = Set("BusinessMembership")
 
@@ -32,8 +33,8 @@ class Permission(db.Entity):
     name = Required(str, max_len=255)
     description = Optional(str)
     category = Optional(str, max_len=100)
-    created_at = Required(datetime, default=datetime.utcnow)
-    updated_at = Required(datetime, default=datetime.utcnow)
+    created_at = Required(datetime, default=utc_now_naive)
+    updated_at = Required(datetime, default=utc_now_naive)
     role_permissions = Set("RolePermission")
 
     def __repr__(self) -> str:
@@ -46,7 +47,7 @@ class RolePermission(db.Entity):
     id = PrimaryKey(int, auto=True)
     role = Required(Role)
     permission = Required(Permission)
-    created_at = Required(datetime, default=datetime.utcnow)
+    created_at = Required(datetime, default=utc_now_naive)
 
     composite_key(role, permission)
 

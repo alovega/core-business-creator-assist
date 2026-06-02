@@ -18,6 +18,8 @@ class User(db.Entity):
     current_business = Optional("Business")
     memberships = Set("BusinessMembership")
     memberships_invited = Set("BusinessMembership", reverse="invited_by")
+    created_customers = Set("Customer", reverse="created_by")
+    updated_customers = Set("Customer", reverse="updated_by")
     created_at = Required(datetime, default=datetime.now)
     updated_at = Required(datetime, default=datetime.now)
 

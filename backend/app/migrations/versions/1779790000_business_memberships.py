@@ -1,10 +1,9 @@
 """Migrate users.business + users.role to business_memberships."""
 
-from datetime import datetime
-
 from pony.orm import db_session
 
 from app.businesses.models import BusinessMembership
+from app.common.time import utc_now_naive
 from app.migrations.migration_helper import (
     add_column,
     add_column_from_model_property,
@@ -50,7 +49,7 @@ def up(db):
         rows = db.select(
             'SELECT id, business, role FROM "users" WHERE business IS NOT NULL'
         )
-        now = datetime.utcnow().isoformat(sep=" ")
+        now = utc_now_naive().isoformat(sep=" ")
         for row in rows:
             user_id, business_id, role = row
             role_value = role or "owner"

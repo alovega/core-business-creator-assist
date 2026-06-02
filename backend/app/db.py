@@ -51,6 +51,7 @@ def generate_mapping(*, create_tables: bool = False, check_tables: bool = True) 
     # Import entities so Pony registers them before mapping.
     from app.businesses import models as _business_models  # noqa: F401
     from app.common.rbac import models as _rbac_models  # noqa: F401
+    from app.customers import models as _customer_models  # noqa: F401
     from app.users import models as _user_models  # noqa: F401
 
     db.generate_mapping(create_tables=create_tables, check_tables=check_tables)

@@ -3,6 +3,7 @@ from datetime import datetime
 from pony.orm import Json, Optional, PrimaryKey, Required, Set, composite_index
 
 from app.businesses.membership_status import MembershipStatus
+from app.common.time import utc_now_naive
 from app.db import db
 
 
@@ -17,9 +18,10 @@ class Business(db.Entity):
     plan = Required(str, default="free", max_len=50)
     status = Required(str, default="active", max_len=50)
     settings_json = Required(Json, default={})
-    created_at = Required(datetime, default=datetime.utcnow)
-    updated_at = Required(datetime, default=datetime.utcnow)
+    created_at = Required(datetime, default=utc_now_naive)
+    updated_at = Required(datetime, default=utc_now_naive)
     memberships = Set("BusinessMembership")
+    customers = Set("Customer")
     current_users = Set("User", reverse="current_business")
 
     def to_dict(self) -> dict:
@@ -51,8 +53,8 @@ class BusinessMembership(db.Entity):
     invited_by = Optional("User", reverse="memberships_invited")
     invited_at = Optional(datetime)
     joined_at = Optional(datetime)
-    created_at = Required(datetime, default=datetime.utcnow)
-    updated_at = Required(datetime, default=datetime.utcnow)
+    created_at = Required(datetime, default=utc_now_naive)
+    updated_at = Required(datetime, default=utc_now_naive)
 
     composite_index(user, business)
 

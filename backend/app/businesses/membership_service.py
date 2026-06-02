@@ -2,9 +2,8 @@
 
 from datetime import datetime
 
-from pony.orm import commit
-
 from app.businesses.membership_status import MembershipStatus
+from app.common.time import utc_now_naive
 
 ACTIVE_STATUS = MembershipStatus.ACTIVE.value
 from app.businesses.models import Business, BusinessMembership
@@ -69,7 +68,7 @@ def create_owner_membership(
     if owner_role is None:
         raise RuntimeError("System role 'owner' is not seeded")
 
-    now = joined_at or datetime.utcnow()
+    now = joined_at or utc_now_naive()
     membership = BusinessMembership(
         user=user,
         business=business,
@@ -134,12 +133,12 @@ def invite_member(
             existing.role = role_entity
             existing.status = MembershipStatus.INVITED.value
             existing.invited_by = invited_by
-            existing.invited_at = datetime.utcnow()
-            existing.updated_at = datetime.utcnow()
+            existing.invited_at = utc_now_naive()
+            existing.updated_at = utc_now_naive()
             return existing
         raise ValueError("User is already a member of this business")
 
-    now = datetime.utcnow()
+    now = utc_now_naive()
     return BusinessMembership(
         user=invitee,
         business=business,
@@ -181,9 +180,9 @@ def update_member_role(
                 raise ValueError(error)
         membership.status = status_value.value
         if status_value == MembershipStatus.ACTIVE and membership.joined_at is None:
-            membership.joined_at = datetime.utcnow()
+            membership.joined_at = utc_now_naive()
 
-    membership.updated_at = datetime.utcnow()
+    membership.updated_at = utc_now_naive()
 
 
 def remove_member(membership: BusinessMembership) -> None:
@@ -206,6 +205,6 @@ def accept_invitation(user: User, business_id: int) -> BusinessMembership:
     if membership is None or membership.status != MembershipStatus.INVITED.value:
         raise ValueError("No pending invitation for this business")
     membership.status = MembershipStatus.ACTIVE.value
-    membership.joined_at = datetime.utcnow()
-    membership.updated_at = datetime.utcnow()
+    membership.joined_at = utc_now_naive()
+    membership.updated_at = utc_now_naive()
     return membership

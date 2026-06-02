@@ -37,7 +37,7 @@ from app.common.rbac.permissions import (
     membership_has_permission,
 )
 from app.common.rbac.roles import Role
-from app.users.models import User
+from app.common.time import utc_now_naive
 
 UPDATABLE_FIELDS = frozenset(
     {"name", "phone_number", "email", "industry", "plan", "status"}
@@ -394,10 +394,8 @@ def accept_current_business_invitation():
     if membership is None or membership.status != MembershipStatus.INVITED.value:
         return jsonify({"error": "No pending invitation for the current business"}), 400
 
-    from datetime import datetime
-
     membership.status = MembershipStatus.ACTIVE.value
-    membership.joined_at = membership.joined_at or datetime.utcnow()
-    membership.updated_at = datetime.utcnow()
+    membership.joined_at = membership.joined_at or utc_now_naive()
+    membership.updated_at = utc_now_naive()
     commit()
     return jsonify({"membership": membership.to_dict()}), 200

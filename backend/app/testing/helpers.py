@@ -1,12 +1,11 @@
 """HTTP and domain helpers reused across colocated module tests."""
 
-from datetime import datetime
-
 from pony.orm import commit, db_session
 
 from app.businesses.membership_status import MembershipStatus
 from app.businesses.models import Business, BusinessMembership
 from app.common.rbac.roles import get_system_role
+from app.common.time import utc_now_naive
 from app.users.models import User
 
 
@@ -56,7 +55,7 @@ def add_business_member(
             role_entity = get_system_role(role)
             assert role_entity is not None
             membership = BusinessMembership.get(user=user, business=business)
-            now = datetime.utcnow()
+            now = utc_now_naive()
             if membership is None:
                 membership = BusinessMembership(
                     user=user,

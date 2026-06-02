@@ -40,6 +40,7 @@ def clean_database():
         clear_permission_cache()
         for table in (
             "role_permissions",
+            "customers",
             "business_memberships",
             "permissions",
             "roles",

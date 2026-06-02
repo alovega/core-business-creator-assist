@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from decimal import Decimal
-from time import time
 
 from pony.orm import Json
+
+from app.common.time import utc_now_naive
 
 SQL_TYPES = {
     "int": "INTEGER",
@@ -31,6 +32,7 @@ PY_TYPES_TO_SQL = {
 
 KNOWN_DEFAULTS = {
     datetime.utcnow: "CURRENT_TIMESTAMP",
+    utc_now_naive: "CURRENT_TIMESTAMP",
 }
 
 
@@ -41,7 +43,9 @@ def get_default_from_property(default):
         return default
     if isinstance(default, dict):
         return json.dumps(default)
-    if default in KNOWN_DEFAULTS:
+    if isinstance(default, (list, tuple)):
+        return json.dumps(default)
+    if callable(default) and default in KNOWN_DEFAULTS:
         return KNOWN_DEFAULTS[default]
     return None
 
@@ -516,6 +520,7 @@ def discover_entity_classes() -> dict[str, type]:
     """Return registered Pony entity classes keyed by class name."""
     from app.businesses.models import Business, BusinessMembership
     from app.common.rbac.models import Permission, Role, RolePermission
+    from app.customers.models import Customer
     from app.users.models import User
 
     return {
@@ -527,5 +532,6 @@ def discover_entity_classes() -> dict[str, type]:
             Role,
             Permission,
             RolePermission,
+            Customer,
         )
     }

@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from pony.orm import commit, db_session
 
 from app.common.rbac.models import Permission, Role, RolePermission
 from app.common.rbac.permissions import clear_permission_cache
+from app.common.time import utc_now_naive
 
 SYSTEM_ROLES: tuple[dict, ...] = (
     {
@@ -59,6 +58,16 @@ SYSTEM_PERMISSIONS: tuple[dict, ...] = (
         "category": "customers",
     },
     {
+        "key": "view_customers",
+        "name": "View customers",
+        "category": "customers",
+    },
+    {
+        "key": "delete_customers",
+        "name": "Delete customers",
+        "category": "customers",
+    },
+    {
         "key": "manage_leads",
         "name": "Manage leads",
         "category": "leads",
@@ -103,6 +112,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
         {
             "manage_conversations",
             "manage_customers",
+            "view_customers",
             "manage_leads",
             "manage_bookings",
             "view_dashboard",
@@ -111,7 +121,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
     "support": frozenset(
         {
             "manage_conversations",
-            "manage_customers",
+            "view_customers",
             "view_dashboard",
         }
     ),
@@ -126,7 +136,7 @@ def get_system_role(key: str) -> Role | None:
 def ensure_rbac_seeded() -> None:
     """Idempotently create system roles, permissions, and role-permission links."""
     clear_permission_cache()
-    now = datetime.utcnow()
+    now = utc_now_naive()
 
     permission_by_key: dict[str, Permission] = {}
     for spec in SYSTEM_PERMISSIONS:

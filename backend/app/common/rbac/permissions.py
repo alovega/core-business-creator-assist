@@ -26,6 +26,8 @@ class PermissionKey(StrEnum):
     MANAGE_ROLES = "manage_roles"
     MANAGE_CONVERSATIONS = "manage_conversations"
     MANAGE_CUSTOMERS = "manage_customers"
+    VIEW_CUSTOMERS = "view_customers"
+    DELETE_CUSTOMERS = "delete_customers"
     MANAGE_LEADS = "manage_leads"
     MANAGE_BOOKINGS = "manage_bookings"
     MANAGE_PAYMENTS = "manage_payments"

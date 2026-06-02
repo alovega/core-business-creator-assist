@@ -1,4 +1,4 @@
-.PHONY: help install env build up up-api down ensure-db test-db drop-test-db migrate create_migration test run celery health setup logs
+.PHONY: help install env build up up-api up-api-detached down ensure-db test-db drop-test-db migrate create_migration test run celery health setup logs
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -33,9 +33,11 @@ up: ## Start PostgreSQL and Redis (docker compose)
 ensure-db: ## Create application database if it does not exist
 	@cd $(BACKEND) && ../$(PYTHON) -c "from dotenv import load_dotenv; load_dotenv(); from app.migrations.create_db import ensure_postgres_database_from_env; ensure_postgres_database_from_env()"
 
-up-api: build ## Start PostgreSQL, Redis, and the Flask API container
-	docker compose up -d
-	@$(MAKE) test-db
+up-api: build up ## Start Flask API container in foreground (live logs)
+	docker compose up api
+
+up-api-detached: build up ## Start Flask API container in background
+	docker compose up -d api
 
 down: ## Stop all Docker Compose services
 	docker compose down
