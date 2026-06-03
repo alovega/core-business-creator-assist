@@ -22,6 +22,8 @@ class Business(db.Entity):
     updated_at = Required(datetime, default=utc_now_naive)
     memberships = Set("BusinessMembership")
     customers = Set("Customer")
+    conversations = Set("Conversation")
+    messages = Set("Message")
     whatsapp_integrations = Set("WhatsAppIntegration")
     current_users = Set("User", reverse="current_business")
 
@@ -54,6 +56,7 @@ class BusinessMembership(db.Entity):
     invited_by = Optional("User", reverse="memberships_invited")
     invited_at = Optional(datetime)
     joined_at = Optional(datetime)
+    assigned_conversations = Set("Conversation", reverse="assigned_to")
     created_at = Required(datetime, default=utc_now_naive)
     updated_at = Required(datetime, default=utc_now_naive)
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pony.orm import Json, Optional, PrimaryKey, Required, composite_key
+from pony.orm import Json, Optional, PrimaryKey, Required, Set, composite_key
 
 from app.common.time import utc_now_naive
 from app.db import db
@@ -21,6 +21,8 @@ class Customer(db.Entity):
     status = Required(str, default="active", max_len=50)
     created_by = Optional("User", reverse="created_customers")
     updated_by = Optional("User", reverse="updated_customers")
+    conversations = Set("Conversation")
+    messages = Set("Message")
     created_at = Required(datetime, default=utc_now_naive)
     updated_at = Required(datetime, default=utc_now_naive)
 

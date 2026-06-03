@@ -3,13 +3,30 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import logging
 import secrets
 from itertools import cycle
 
 from flask import current_app
+from pony.orm import commit, db_session
 
+from app.conversations.services import find_or_create_conversation, mark_inbound_activity
+from app.customers.services import find_or_create_whatsapp_customer, normalize_phone_number
+from app.messages.services import (
+    create_inbound_whatsapp_message,
+    find_by_provider_message_id,
+    update_whatsapp_message_status,
+)
 from app.whatsapp.models import WhatsAppIntegration
+from app.whatsapp.webhook_parser import (
+    WhatsAppWebhookEventType,
+    detect_event_type,
+    parse_incoming_message,
+    parse_message_status_update,
+)
 from app.whatsapp.validators import now
+
+logger = logging.getLogger(__name__)
 
 
 def _secret_key_material() -> bytes:
@@ -99,3 +116,176 @@ def disconnect_integration(*, integration, actor):
     integration.disconnected_at = now()
     integration.updated_by = actor
     integration.updated_at = now()
+
+
+def trigger_automation_checks(*, business_id: int, conversation_id: int, message_id: int) -> None:
+    # Placeholder for automation hook integration.
+    logger.debug(
+        "Automation checks triggered",
+        extra={
+            "business_id": business_id,
+            "conversation_id": conversation_id,
+            "message_id": message_id,
+        },
+    )
+
+
+def trigger_realtime_inbox_update(*, business_id: int, conversation_id: int) -> None:
+    # Placeholder for realtime notifications (e.g. websocket/pubsub).
+    logger.debug(
+        "Realtime inbox update triggered",
+        extra={"business_id": business_id, "conversation_id": conversation_id},
+    )
+
+
+@db_session
+def process_incoming_message_event(payload: dict) -> dict:
+    parsed = parse_incoming_message(payload)
+    if parsed is None:
+        return {"ok": False, "reason": "invalid_incoming_payload", "retryable": False}
+
+    integration = WhatsAppIntegration.get(
+        phone_number_id=parsed.phone_number_id,
+        status="connected",
+    )
+    if integration is None:
+        logger.warning(
+            "WhatsApp integration not found for phone_number_id",
+            extra={"phone_number_id": parsed.phone_number_id, "payload": payload},
+        )
+        return {"ok": False, "reason": "integration_not_found", "retryable": False}
+
+    business = integration.business
+    normalized_phone = normalize_phone_number(parsed.customer_phone_number)
+    if not normalized_phone:
+        return {"ok": False, "reason": "invalid_customer_phone", "retryable": False}
+
+    customer, customer_created = find_or_create_whatsapp_customer(
+        business=business,
+        phone_number=parsed.customer_phone_number,
+        profile_name=parsed.profile_name,
+    )
+    conversation, conversation_created = find_or_create_conversation(
+        business=business,
+        customer=customer,
+        channel="whatsapp",
+    )
+    message, message_created = create_inbound_whatsapp_message(
+        business=business,
+        customer=customer,
+        conversation=conversation,
+        provider_message_id=parsed.provider_message_id,
+        body=parsed.message_body,
+        provider_payload={"raw_message": parsed.raw_message},
+    )
+
+    if message_created:
+        mark_inbound_activity(conversation=conversation)
+    commit()
+
+    if message_created:
+        trigger_automation_checks(
+            business_id=business.id,
+            conversation_id=conversation.id,
+            message_id=message.id,
+        )
+        trigger_realtime_inbox_update(
+            business_id=business.id,
+            conversation_id=conversation.id,
+        )
+
+    logger.info(
+        "Processed incoming WhatsApp webhook",
+        extra={
+            "business_id": business.id,
+            "phone_number_id": parsed.phone_number_id,
+            "provider_message_id": parsed.provider_message_id,
+            "message_created": message_created,
+        },
+    )
+    return {
+        "ok": True,
+        "event_type": WhatsAppWebhookEventType.INCOMING_MESSAGE.value,
+        "business_id": business.id,
+        "customer_id": customer.id,
+        "conversation_id": conversation.id,
+        "message_id": message.id,
+        "customer_created": customer_created,
+        "conversation_created": conversation_created,
+        "message_created": message_created,
+        "retryable": False,
+    }
+
+
+@db_session
+def process_message_status_event(payload: dict) -> dict:
+    parsed = parse_message_status_update(payload)
+    if parsed is None:
+        return {"ok": False, "reason": "invalid_status_payload", "retryable": False}
+
+    integration = WhatsAppIntegration.get(
+        phone_number_id=parsed.phone_number_id,
+        status="connected",
+    )
+    if integration is None:
+        logger.warning(
+            "WhatsApp integration not found for status update",
+            extra={"phone_number_id": parsed.phone_number_id, "payload": payload},
+        )
+        return {"ok": False, "reason": "integration_not_found", "retryable": False}
+
+    message = find_by_provider_message_id(
+        business=integration.business,
+        provider_message_id=parsed.provider_message_id,
+    )
+    if message is None:
+        logger.info(
+            "WhatsApp status update did not match a message",
+            extra={
+                "business_id": integration.business.id,
+                "provider_message_id": parsed.provider_message_id,
+                "status": parsed.status,
+            },
+        )
+        return {"ok": False, "reason": "message_not_found", "retryable": False}
+
+    if parsed.status not in {"sent", "delivered", "read", "failed", "undeliverable"}:
+        logger.info(
+            "Unsupported WhatsApp message status",
+            extra={
+                "business_id": integration.business.id,
+                "provider_message_id": parsed.provider_message_id,
+                "status": parsed.status,
+            },
+        )
+        return {"ok": False, "reason": "unsupported_status", "retryable": False}
+
+    update_whatsapp_message_status(
+        message=message,
+        status=parsed.status,
+        metadata=parsed.metadata,
+    )
+    commit()
+    return {
+        "ok": True,
+        "event_type": WhatsAppWebhookEventType.MESSAGE_STATUS_UPDATE.value,
+        "business_id": integration.business.id,
+        "message_id": message.id,
+        "status": parsed.status,
+        "retryable": False,
+    }
+
+
+def process_webhook_payload(payload: dict) -> dict:
+    event_type = detect_event_type(payload)
+    if event_type is WhatsAppWebhookEventType.INCOMING_MESSAGE:
+        return process_incoming_message_event(payload)
+    if event_type is WhatsAppWebhookEventType.MESSAGE_STATUS_UPDATE:
+        return process_message_status_event(payload)
+    logger.info("Unsupported WhatsApp webhook event", extra={"payload": payload})
+    return {
+        "ok": False,
+        "event_type": WhatsAppWebhookEventType.UNSUPPORTED.value,
+        "reason": "unsupported_event",
+        "retryable": False,
+    }
