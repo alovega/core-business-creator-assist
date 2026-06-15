@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+import json
+import logging
+
 from flask import current_app, g, jsonify, request
 from pony.orm import commit, db_session
+
+from app.whatsapp.webhook_auth import is_valid_verify_token, verify_webhook_signature
+from app.whatsapp.webhook_worker import process_whatsapp_webhook
+
+logger = logging.getLogger(__name__)
 
 from app.common.rbac.decorators import business_required, login_required, permission_required
 from app.common.rbac.permissions import PermissionKey
@@ -25,6 +33,48 @@ from app.whatsapp.validators import (
 
 def _json_body() -> dict:
     return request.get_json(silent=True) or {}
+
+
+@whatsapp_bp.get("/webhook")
+def verify_webhook():
+    """Meta webhook subscription verification (hub.challenge)."""
+    mode = (request.args.get("hub.mode") or "").strip()
+    token = (request.args.get("hub.verify_token") or "").strip()
+    challenge = request.args.get("hub.challenge")
+
+    if mode != "subscribe" or not is_valid_verify_token(token):
+        logger.warning(
+            "WhatsApp webhook verification failed",
+            extra={"hub_mode": mode},
+        )
+        return jsonify({"error": "Verification failed"}), 403
+
+    if challenge is None:
+        return jsonify({"error": "Missing hub.challenge"}), 400
+
+    return str(challenge), 200, {"Content-Type": "text/plain"}
+
+
+@whatsapp_bp.post("/webhook")
+def receive_webhook():
+    """Accept Meta webhook payloads and enqueue background processing."""
+    raw_body = request.get_data()
+    signature = request.headers.get("X-Hub-Signature-256")
+
+    if not verify_webhook_signature(raw_body=raw_body, signature_header=signature):
+        logger.warning("WhatsApp webhook signature verification failed")
+        return jsonify({"error": "Invalid signature"}), 403
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return jsonify({"error": "Invalid JSON payload"}), 400
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Invalid JSON payload"}), 400
+
+    process_whatsapp_webhook.delay(payload)
+    logger.info("WhatsApp webhook enqueued for processing")
+    return jsonify({"ok": True}), 200
 
 
 @whatsapp_bp.get("/integration")
