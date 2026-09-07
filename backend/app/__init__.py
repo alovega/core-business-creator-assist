@@ -26,6 +26,7 @@ def register_blueprints(app: Flask) -> None:
     from app.customers import customers_bp
     from app.leads import leads_bp
     from app.messages import messages_bp
+    from app.messages import routes as _message_routes  # noqa: F401
     from app.payments import payments_bp
     from app.whatsapp import whatsapp_bp
 
