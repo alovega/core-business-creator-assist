@@ -39,6 +39,8 @@ def clean_database():
             return
         clear_permission_cache()
         for table in (
+            "messages",
+            "conversations",
             "role_permissions",
             "business_memberships",
             "permissions",
