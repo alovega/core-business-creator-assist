@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import g, jsonify, request
-from pony.orm import commit, db_session
+from pony.orm import commit, db_session, select
 
 from app.common.rbac.decorators import business_required, login_required, permission_required
 from app.common.rbac.permissions import PermissionKey
@@ -12,6 +12,87 @@ from app.messages.models import Message
 from app.messages.services import WhatsAppSendError, send_whatsapp_message
 
 SUPPORTED_MESSAGE_TYPES = frozenset({"text", "image", "video", "audio", "document"})
+
+
+def _parse_since():
+    raw = request.args.get("since")
+    if not raw:
+        return datetime.min
+    try:
+        value = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if value.tzinfo is not None:
+        value = value.astimezone(timezone.utc).replace(tzinfo=None)
+    return value
+
+
+def _poll_cursor() -> str:
+    return datetime.utcnow().isoformat(timespec="microseconds") + "Z"
+
+
+def _invalid_since():
+    return jsonify({"error": "since must be an ISO-8601 timestamp"}), 400
+
+
+def _conversation_payload(conversation: Conversation) -> dict:
+    payload = conversation.to_dict()
+    payload["unread_count"] = sum(
+        1 for message in conversation.messages if message.direction == "incoming"
+    )
+    return payload
+
+
+@conversations_bp.get("/updates")
+@login_required
+@business_required
+@permission_required(PermissionKey.MANAGE_CONVERSATIONS)
+@db_session
+def conversation_updates():
+    since = _parse_since()
+    if since is None:
+        return _invalid_since()
+
+    conversations = list(
+        select(
+            conversation
+            for conversation in Conversation
+            if conversation.business == g.current_business
+            and conversation.updated_at > since
+        ).order_by(lambda conversation: conversation.updated_at)
+    )
+    return jsonify(
+        {
+            "conversations": [_conversation_payload(item) for item in conversations],
+            "since": _poll_cursor(),
+        }
+    ), 200
+
+
+@conversations_bp.get("/<int:conversation_id>/messages/updates")
+@login_required
+@business_required
+@permission_required(PermissionKey.MANAGE_CONVERSATIONS)
+@db_session
+def message_updates(conversation_id: int):
+    since = _parse_since()
+    if since is None:
+        return _invalid_since()
+
+    conversation = _conversation_for_current_business(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "Conversation not found"}), 404
+
+    messages = list(
+        select(
+            message
+            for message in Message
+            if message.conversation == conversation and message.created_at > since
+        ).order_by(lambda message: message.created_at)
+    )
+    return jsonify(
+        {"messages": [item.to_dict() for item in messages], "since": _poll_cursor()}
+    ), 200
 
 
 def _json_body() -> dict:

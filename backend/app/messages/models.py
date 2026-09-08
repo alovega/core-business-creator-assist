@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pony.orm import Optional, Required
+from pony.orm import Optional, Required, composite_index
 
 from app.db import db
 
@@ -20,6 +20,8 @@ class Message(db.Entity):
     status = Required(str, default="pending", max_len=50)
     sent_by_user = Optional("User")
     created_at = Required(datetime, default=datetime.utcnow)
+
+    composite_index(conversation, created_at)
 
     def to_dict(self) -> dict:
         return {

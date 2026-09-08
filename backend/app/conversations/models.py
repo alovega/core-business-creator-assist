@@ -18,6 +18,7 @@ class Conversation(db.Entity):
     messages = Set("Message")
 
     composite_index(business, customer_id)
+    composite_index(business, updated_at)
 
     def to_dict(self) -> dict:
         return {
