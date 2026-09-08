@@ -18,6 +18,7 @@ class User(db.Entity):
     current_business = Optional("Business")
     memberships = Set("BusinessMembership")
     memberships_invited = Set("BusinessMembership", reverse="invited_by")
+    sent_messages = Set("Message", reverse="sent_by_user")
     created_at = Required(datetime, default=datetime.now)
     updated_at = Required(datetime, default=datetime.now)
 
