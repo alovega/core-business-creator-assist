@@ -20,6 +20,9 @@ class Business(db.Entity):
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
     memberships = Set("BusinessMembership")
+    conversations = Set("Conversation")
+    messages = Set("Message")
+    leads = Set("Lead")
     current_users = Set("User", reverse="current_business")
 
     def to_dict(self) -> dict:
