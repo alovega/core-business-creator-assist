@@ -16,6 +16,7 @@ class Conversation(db.Entity):
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
     messages = Set("Message")
+    leads = Set("Lead")
 
     composite_index(business, customer_id)
     composite_index(business, updated_at)

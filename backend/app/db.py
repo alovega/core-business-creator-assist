@@ -52,6 +52,7 @@ def generate_mapping(*, create_tables: bool = False, check_tables: bool = True) 
     from app.businesses import models as _business_models  # noqa: F401
     from app.common.rbac import models as _rbac_models  # noqa: F401
     from app.conversations import models as _conversation_models  # noqa: F401
+    from app.leads import models as _lead_models  # noqa: F401
     from app.messages import models as _message_models  # noqa: F401
     from app.users import models as _user_models  # noqa: F401
 
