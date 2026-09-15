@@ -41,8 +41,13 @@ def get_default_from_property(default):
         return default
     if isinstance(default, dict):
         return json.dumps(default)
-    if default in KNOWN_DEFAULTS:
-        return KNOWN_DEFAULTS[default]
+    try:
+        if default in KNOWN_DEFAULTS:
+            return KNOWN_DEFAULTS[default]
+    except TypeError:
+        # Lists, dicts, sets, etc. are unhashable and cannot
+        # be looked up directly in KNOWN_DEFAULTS.
+        pass
     return None
 
 

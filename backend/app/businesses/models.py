@@ -24,6 +24,7 @@ class Business(db.Entity):
     messages = Set("Message")
     leads = Set("Lead")
     current_users = Set("User", reverse="current_business")
+    customers = Set("Customer", reverse="business")
 
     def to_dict(self) -> dict:
         return {
@@ -56,6 +57,7 @@ class BusinessMembership(db.Entity):
     joined_at = Optional(datetime)
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
+    assigned_conversations = Set("Conversation", reverse="assigned_to_membership")
 
     composite_index(user, business)
 
