@@ -23,6 +23,8 @@ class Business(db.Entity):
     conversations = Set("Conversation")
     messages = Set("Message")
     leads = Set("Lead")
+    faq_entries = Set("FAQEntry")
+    auto_response_rules = Set("AutoResponseRule")
     current_users = Set("User", reverse="current_business")
     customers = Set("Customer", reverse="business")
 
