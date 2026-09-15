@@ -39,6 +39,11 @@ def clean_database():
             return
         clear_permission_cache()
         for table in (
+            "messages",
+            "auto_response_rules",
+            "faq_entries",
+            "leads",
+            "conversations",
             "role_permissions",
             "business_memberships",
             "permissions",
