@@ -44,6 +44,7 @@ def clean_database():
             "faq_entries",
             "leads",
             "conversations",
+            "customers",
             "role_permissions",
             "business_memberships",
             "permissions",
