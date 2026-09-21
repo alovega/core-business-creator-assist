@@ -46,6 +46,24 @@ On startup (`make run`, `make up-api`), the app creates the Postgres database if
 make health
 ```
 
+**Messages**
+
+Retrieve messages for a conversation:
+
+```bash
+curl http://127.0.0.1:5000/api/messages/<conversation_id> \\
+	-H "Authorization: Bearer <token>"
+```
+
+Send a WhatsApp text message:
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/messages/<conversation_id> \\
+	-H "Authorization: Bearer <token>" \\
+	-H "Content-Type: application/json" \\
+	-d '{"body":"Hello from the team"}'
+```
+
 **Run tests**
 
 ```bash
