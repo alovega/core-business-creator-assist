@@ -4,6 +4,7 @@ from pony.orm import Optional, Required
 
 from app.db import db
 
+VALID_LEAD_STAGES = frozenset({"new", "interested", "negotiating", "booked", "paid", "lost"})
 
 class Lead(db.Entity):
     _table_ = "leads"

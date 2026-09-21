@@ -3,16 +3,15 @@ from datetime import datetime
 from flask import g, jsonify, request
 from pony.orm import commit, db_session, select
 
+from app.automations.engine import dispatch_automation_event
 from app.businesses.membership_status import MembershipStatus
 from app.businesses.models import BusinessMembership
 from app.common.rbac.decorators import business_required, login_required, permission_required
 from app.common.rbac.permissions import PermissionKey
 from app.conversations.models import Conversation
 from app.leads import leads_bp
-from app.leads.models import Lead
+from app.leads.models import Lead, VALID_LEAD_STAGES
 from app.users.models import User
-
-VALID_LEAD_STAGES = frozenset({"new", "interested", "negotiating", "booked", "paid", "lost"})
 
 
 def _json_body() -> dict:
@@ -179,6 +178,16 @@ def create_lead():
 
     lead = Lead(**payload)
     commit()
+    dispatch_automation_event(
+    g.current_business,
+    "lead_created",
+    {
+        "lead_id": lead.id,
+        "conversation_id": conversation.id,
+        "customer_id": lead.customer_id,
+        "stage": lead.stage,
+    },
+)
     return jsonify({"lead": lead.to_dict()}), 201
 
 

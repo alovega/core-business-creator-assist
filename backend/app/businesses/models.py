@@ -25,6 +25,8 @@ class Business(db.Entity):
     leads = Set("Lead")
     faq_entries = Set("FAQEntry")
     auto_response_rules = Set("AutoResponseRule")
+    automations = Set("Automation", reverse="business")
+    automation_runs = Set("AutomationRun", reverse="business")
     current_users = Set("User", reverse="current_business")
     customers = Set("Customer", reverse="business")
 
