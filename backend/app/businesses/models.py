@@ -29,6 +29,7 @@ class Business(db.Entity):
     automation_runs = Set("AutomationRun", reverse="business")
     current_users = Set("User", reverse="current_business")
     customers = Set("Customer", reverse="business")
+    bookings = Set("Booking", reverse="business")
 
     def to_dict(self) -> dict:
         return {

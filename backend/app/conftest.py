@@ -40,6 +40,7 @@ def clean_database():
         clear_permission_cache()
         for table in (
             "messages",
+            "bookings",
             "automation_runs",
             "automations",
             "auto_response_rules",

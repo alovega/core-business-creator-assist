@@ -23,6 +23,7 @@ def register_blueprints(app: Flask) -> None:
     from app.automations import automations_bp
     from app.automations import routes as _automation_routes  # noqa: F401
     from app.bookings import bookings_bp
+    from app.bookings import routes as _booking_routes  # noqa: F401
     from app.businesses import businesses_bp
     from app.businesses import routes as _business_routes  # noqa: F401
     from app.conversations import conversations_bp
