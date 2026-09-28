@@ -41,8 +41,13 @@ def get_default_from_property(default):
         return default
     if isinstance(default, dict):
         return json.dumps(default)
-    if default in KNOWN_DEFAULTS:
-        return KNOWN_DEFAULTS[default]
+    try:
+        if default in KNOWN_DEFAULTS:
+            return KNOWN_DEFAULTS[default]
+    except TypeError:
+        # Lists, dicts, sets, etc. are unhashable and cannot
+        # be looked up directly in KNOWN_DEFAULTS.
+        pass
     return None
 
 
@@ -516,6 +521,8 @@ def discover_entity_classes() -> dict[str, type]:
     """Return registered Pony entity classes keyed by class name."""
     from app.businesses.models import Business, BusinessMembership
     from app.common.rbac.models import Permission, Role, RolePermission
+    from app.conversations.models import Conversation
+    from app.messages.models import Message
     from app.users.models import User
 
     return {
@@ -523,6 +530,8 @@ def discover_entity_classes() -> dict[str, type]:
         for cls in (
             Business,
             BusinessMembership,
+            Conversation,
+            Message,
             User,
             Role,
             Permission,
