@@ -15,6 +15,7 @@ def create_customer_and_conversation(business_id: int) -> tuple[int, int]:
             business=business,
             name="John Customer",
             phone_number="15551234567",
+            normalized_phone_number="15551234567",
         )
         commit()
         conversation = Conversation(
@@ -101,6 +102,7 @@ def test_booking_requires_customer_and_matching_conversation(owner_client):
             business=Business.get(id=business_id),
             name="Other Customer",
             phone_number="15550001111",
+            normalized_phone_number="15550001111",
         )
         commit()
         other_customer_id = other_customer.id

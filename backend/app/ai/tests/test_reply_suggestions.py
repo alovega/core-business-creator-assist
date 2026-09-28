@@ -52,6 +52,7 @@ def _create_conversation_with_context(business_id: int) -> int:
             business=business,
             name="Alice",
             phone_number="15551234567",
+            normalized_phone_number="15551234567"
         )
 
         commit()
