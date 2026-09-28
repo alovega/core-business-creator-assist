@@ -27,6 +27,7 @@ class Conversation(db.Entity):
     messages = Set("Message")
     leads = Set("Lead")
     bookings = Set("Booking", reverse="conversation")
+    payments = Set("Payment", reverse="conversation")
 
     composite_key(business, customer_id, channel)
     composite_index(business, updated_at)

@@ -30,6 +30,7 @@ class Business(db.Entity):
     current_users = Set("User", reverse="current_business")
     customers = Set("Customer", reverse="business")
     bookings = Set("Booking", reverse="business")
+    payments = Set("Payment", reverse="business")
 
     def to_dict(self) -> dict:
         return {

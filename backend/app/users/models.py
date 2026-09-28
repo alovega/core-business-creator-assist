@@ -19,6 +19,7 @@ class User(db.Entity):
     memberships = Set("BusinessMembership")
     memberships_invited = Set("BusinessMembership", reverse="invited_by")
     sent_messages = Set("Message", reverse="sent_by_user")
+    confirmed_payments = Set("Payment", reverse="confirmed_by_user")
     assigned_conversations = Set("Conversation", reverse="assigned_to_user")
     created_conversations = Set("Conversation", reverse="created_by")
     updated_conversations = Set("Conversation", reverse="updated_by")

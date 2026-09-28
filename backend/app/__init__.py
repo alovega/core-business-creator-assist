@@ -34,6 +34,7 @@ def register_blueprints(app: Flask) -> None:
     from app.messages import messages_bp
     from app.messages import routes as _message_routes  # noqa: F401
     from app.payments import payments_bp
+    from app.payments import routes as _payment_routes  # noqa: F401
     from app.whatsapp import whatsapp_bp
 
     app.register_blueprint(health_bp)
