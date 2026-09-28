@@ -69,8 +69,18 @@ SYSTEM_PERMISSIONS: tuple[dict, ...] = (
         "category": "conversations",
     },
     {
-        "key": "manage_customers",
-        "name": "Manage customers",
+        "key": "view_customers",
+        "name": "View customers",
+        "category": "customers",
+    },
+     {
+         "key": "manage_customers",
+         "name": "Manage customers",
+         "category": "customers",
+     },
+    {
+        "key": "delete_customers",
+        "name": "Delete customers",
         "category": "customers",
     },
     {
@@ -117,6 +127,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
     "staff": frozenset(
         {
             # "manage_conversations",
+            "view_customers",
             "manage_customers",
             "manage_leads",
             "manage_bookings",
@@ -131,6 +142,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
             "close_conversations",
             "manage_conversations",
             "manage_customers",
+            "view_customers",
             "view_dashboard",
         }
     ),
