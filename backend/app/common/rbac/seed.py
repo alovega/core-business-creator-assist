@@ -120,6 +120,7 @@ ROLE_PERMISSION_KEYS: dict[str, frozenset[str]] = {
             "manage_customers",
             "manage_leads",
             "manage_bookings",
+            "manage_payments",
             "view_dashboard",
         }
     ),
