@@ -24,6 +24,8 @@ class User(db.Entity):
     created_conversations = Set("Conversation", reverse="created_by")
     updated_conversations = Set("Conversation", reverse="updated_by")
     assigned_leads = Set("Lead", reverse="assigned_to_user")
+    customers_created = Set("Customer", reverse="created_by")
+    customers_updated = Set("Customer", reverse="updated_by")
     created_at = Required(datetime, default=datetime.now)
     updated_at = Required(datetime, default=datetime.now)
 
