@@ -17,6 +17,7 @@ def create_customer_and_conversation(business_id: int) -> tuple[int, int]:
             business=business,
             name="John Customer",
             phone_number="254700000001",
+            normalized_phone_number="254700000001",
         )
         commit()
         conversation = Conversation(
