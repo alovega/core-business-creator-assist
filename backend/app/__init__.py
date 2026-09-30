@@ -30,6 +30,8 @@ def register_blueprints(app: Flask) -> None:
     from app.conversations import routes as _conversation_routes  # noqa: F401
     from app.customers import customers_bp
     from app.customers import routes as _customer_routes  # noqa: F401
+    from app.dashboard import dashboard_bp
+    from app.dashboard import routes as _dashboard_routes  # noqa: F401
     from app.leads import leads_bp
     from app.leads import routes as _lead_routes  # noqa: F401
     from app.messages import messages_bp
@@ -42,6 +44,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(auth_bp)
     app.register_blueprint(businesses_bp)
     app.register_blueprint(customers_bp)
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(conversations_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(whatsapp_bp)
