@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pony.orm import Optional, Required
+from pony.orm import Optional, Required, composite_index
 
 from app.db import db
 
@@ -20,6 +20,9 @@ class Lead(db.Entity):
     next_follow_up_at = Optional(datetime)
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
+
+    composite_index(business, created_at)
+    composite_index(business, stage)
 
     def to_dict(self) -> dict:
         return {

@@ -22,6 +22,8 @@ class Message(db.Entity):
     created_at = Required(datetime, default=datetime.utcnow)
 
     composite_index(conversation, created_at)
+    composite_index(business, created_at)
+    composite_index(business, direction, created_at)
 
     def to_dict(self) -> dict:
         return {

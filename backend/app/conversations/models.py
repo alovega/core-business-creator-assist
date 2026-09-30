@@ -32,6 +32,8 @@ class Conversation(db.Entity):
     composite_key(business, customer_id, channel)
     composite_index(business, updated_at)
     composite_index(business, last_message_at)
+    composite_index(business, unread_count)
+    composite_index(business, status)
 
     def to_dict(self) -> dict:
         return {
