@@ -17,22 +17,34 @@ load_dotenv()
 
 def register_blueprints(app: Flask) -> None:
     from app.ai import ai_bp
+    from app.ai import routes as _ai_routes  # noqa: F401
     from app.auth import auth_bp
+    from app.auth import routes as _auth_routes  # noqa: F401
     from app.automations import automations_bp
+    from app.automations import routes as _automation_routes  # noqa: F401
     from app.bookings import bookings_bp
+    from app.bookings import routes as _booking_routes  # noqa: F401
     from app.businesses import businesses_bp
     from app.businesses import routes as _business_routes  # noqa: F401
     from app.conversations import conversations_bp
+    from app.conversations import routes as _conversation_routes  # noqa: F401
     from app.customers import customers_bp
+    from app.customers import routes as _customer_routes  # noqa: F401
+    from app.dashboard import dashboard_bp
+    from app.dashboard import routes as _dashboard_routes  # noqa: F401
     from app.leads import leads_bp
+    from app.leads import routes as _lead_routes  # noqa: F401
     from app.messages import messages_bp
+    from app.messages import routes as _message_routes  # noqa: F401
     from app.payments import payments_bp
+    from app.payments import routes as _payment_routes  # noqa: F401
     from app.whatsapp import whatsapp_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(businesses_bp)
     app.register_blueprint(customers_bp)
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(conversations_bp)
     app.register_blueprint(messages_bp)
     app.register_blueprint(whatsapp_bp)
