@@ -10,6 +10,7 @@ from app.common.rbac.decorators import business_required, login_required, permis
 from app.common.rbac.permissions import PermissionKey
 from app.conversations.models import Conversation
 from app.customers.models import Customer
+from app.notifications.services import notify_booking_created
 
 
 def _json_body() -> dict:
@@ -192,7 +193,7 @@ def create_booking():
         notes=notes,
     )
     commit()
-
+    notify_booking_created(booking)
     dispatch_automation_event(
         g.current_business,
         "booking_created",

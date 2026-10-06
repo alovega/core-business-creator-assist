@@ -6,11 +6,16 @@ from pony.orm import commit, db_session, select
 from app.automations.engine import dispatch_automation_event
 from app.businesses.membership_status import MembershipStatus
 from app.businesses.models import BusinessMembership
-from app.common.rbac.decorators import business_required, login_required, permission_required
+from app.common.rbac.decorators import (
+    business_required,
+    login_required,
+    permission_required,
+)
 from app.common.rbac.permissions import PermissionKey
 from app.conversations.models import Conversation
 from app.leads import leads_bp
 from app.leads.models import Lead, VALID_LEAD_STAGES
+from app.notifications.services import notify_new_lead
 from app.users.models import User
 
 
@@ -43,7 +48,9 @@ def _parse_optional_datetime(value):
     try:
         parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
     except ValueError as exc:
-        raise ValueError("next_follow_up_at must be an ISO-8601 datetime string") from exc
+        raise ValueError(
+            "next_follow_up_at must be an ISO-8601 datetime string"
+        ) from exc
     if parsed.tzinfo is not None:
         return parsed.astimezone().replace(tzinfo=None)
     return parsed
@@ -82,7 +89,9 @@ def _validate_assignee(user_id):
 
     membership = BusinessMembership.get(user=user, business=g.current_business)
     if membership is None or membership.status == MembershipStatus.REMOVED.value:
-        raise LookupError("assigned_to_user_id must reference a member of this business")
+        raise LookupError(
+            "assigned_to_user_id must reference a member of this business"
+        )
 
     return user
 
@@ -178,16 +187,18 @@ def create_lead():
 
     lead = Lead(**payload)
     commit()
+
+    notify_new_lead(lead)
     dispatch_automation_event(
-    g.current_business,
-    "lead_created",
-    {
-        "lead_id": lead.id,
-        "conversation_id": conversation.id,
-        "customer_id": lead.customer_id,
-        "stage": lead.stage,
-    },
-)
+        g.current_business,
+        "lead_created",
+        {
+            "lead_id": lead.id,
+            "conversation_id": conversation.id,
+            "customer_id": lead.customer_id,
+            "stage": lead.stage,
+        },
+    )
     return jsonify({"lead": lead.to_dict()}), 201
 
 
@@ -258,7 +269,9 @@ def update_lead(lead_id: int):
 
     if "next_follow_up_at" in data:
         try:
-            lead.next_follow_up_at = _parse_optional_datetime(data.get("next_follow_up_at"))
+            lead.next_follow_up_at = _parse_optional_datetime(
+                data.get("next_follow_up_at")
+            )
         except ValueError as exc:
             return _validation_error(str(exc))
 

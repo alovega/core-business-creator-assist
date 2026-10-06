@@ -10,6 +10,7 @@ from app.conversations.models import Conversation
 from app.customers.models import Customer
 from app.messages.models import Message
 from app.messages.services import WhatsAppSendError, send_whatsapp_message
+from app.notifications.services import notify_payment_pending
 from app.payments import payments_bp
 from app.payments.models import Payment, VALID_PAYMENT_METHODS, VALID_PAYMENT_STATUSES
 
@@ -212,6 +213,10 @@ def create_payment():
         payment.confirmed_by_user = g.current_user
         payment.confirmed_at = datetime.utcnow()
     commit()
+    
+    if payment.status == "pending":
+        notify_payment_pending(payment)
+
     return jsonify({"payment": payment.to_dict()}), 201
 
 
@@ -228,6 +233,7 @@ def update_payment(payment_id: int):
     data = _json_body()
     customer_id = payment.customer_id
     conversation = payment.conversation
+    was_pending = payment.status == "pending"
 
     try:
         if "customer_id" in data:
@@ -263,6 +269,10 @@ def update_payment(payment_id: int):
     payment.customer_id = customer_id
     payment.conversation = conversation
     commit()
+    
+    if payment.status == "pending" and not was_pending:
+        notify_payment_pending(payment)
+
     return jsonify({"payment": payment.to_dict()}), 200
 
 

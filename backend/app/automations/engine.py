@@ -15,6 +15,12 @@ import app.extensions as extensions
 from app.leads.models import Lead, VALID_LEAD_STAGES
 from app.messages.models import Message
 from app.messages.services import send_whatsapp_message
+from app.notifications.services import (
+    notify_automation_failed,
+    notify_business_staff,
+    notify_new_lead,
+    notify_new_message,
+)
 
 logger = get_logger("app.automations")
 
@@ -150,6 +156,7 @@ def _create_lead_action(business, config: dict, payload: dict) -> dict:
 
     lead = Lead(**lead_data)
     commit()
+    notify_new_lead(lead)
     return {"lead_id": lead.id}
 
 
@@ -212,34 +219,26 @@ def _notify_staff_action(business, config: dict, payload: dict) -> dict:
         except (TypeError, ValueError) as exc:
             raise ValueError("action_config.user_ids must contain integers") from exc
 
-    memberships = list(
-        select(
-            membership
-            for membership in BusinessMembership
-            if membership.business == business
-            and membership.status == MembershipStatus.ACTIVE.value
-        )
-    )
-    recipient_user_ids = [
-        membership.user.id
-        for membership in memberships
-        if requested_user_ids is None or membership.user.id in requested_user_ids
-    ]
+    
     message = _render_text(template, payload)
-    if not recipient_user_ids:
+    notifications = notify_business_staff(
+        business=business,
+        title=str(config.get("title") or "Automation notification"),
+        message=message,
+        notification_type="automation_staff_notification",
+        link_url=config.get("link_url"),
+        user_ids=requested_user_ids,
+    )
+    if not notifications:
         raise ValueError("no active staff recipients were found for this business")
 
     notification = {
         "type": "automation_staff_notification",
         "business_id": business.id,
-        "recipient_user_ids": recipient_user_ids,
+        "recipient_user_ids": [item.user.id for item in notifications],
+        "notification_ids": [item.id for item in notifications],
         "message": message,
     }
-    if extensions.redis_client is not None:
-        extensions.redis_client.publish(
-            f"business:{business.id}:notifications",
-            json.dumps(notification),
-        )
 
     logger.info("automation_staff_notification", **notification)
     return notification
@@ -313,6 +312,18 @@ def dispatch_automation_event(
                 business_id=business.id,
                 trigger_type=trigger_type,
             )
+            try:
+                notify_automation_failed(
+                    business=business,
+                    automation=automation,
+                    error_message=run.error_message,
+                )
+            except Exception:
+                logger.exception(
+                    "automation_failure_notification_failed",
+                    automation_id=automation.id,
+                    business_id=business.id,
+                )
         finally:
             run.completed_at = datetime.utcnow()
             commit()
@@ -323,6 +334,7 @@ def dispatch_automation_event(
 def dispatch_new_message_received(message: Message) -> list[AutomationRun]:
     if message.direction != "incoming":
         return []
+    notify_new_message(message)
     return dispatch_automation_event(
         message.business,
         "new_message_received",
