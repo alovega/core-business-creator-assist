@@ -36,6 +36,8 @@ def register_blueprints(app: Flask) -> None:
     from app.leads import routes as _lead_routes  # noqa: F401
     from app.messages import messages_bp
     from app.messages import routes as _message_routes  # noqa: F401
+    from app.notifications import notifications_bp
+    from app.notifications import routes as _notification_routes  # noqa: F401
     from app.payments import payments_bp
     from app.payments import routes as _payment_routes  # noqa: F401
     from app.whatsapp import whatsapp_bp
@@ -47,6 +49,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(conversations_bp)
     app.register_blueprint(messages_bp)
+    app.register_blueprint(notifications_bp)
     app.register_blueprint(whatsapp_bp)
     app.register_blueprint(leads_bp)
     app.register_blueprint(bookings_bp)

@@ -22,6 +22,7 @@ class Business(db.Entity):
     memberships = Set("BusinessMembership")
     conversations = Set("Conversation")
     messages = Set("Message")
+    notifications = Set("Notification", reverse="business")
     leads = Set("Lead")
     faq_entries = Set("FAQEntry")
     auto_response_rules = Set("AutoResponseRule")
