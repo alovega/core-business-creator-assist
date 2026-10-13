@@ -39,10 +39,12 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/0
       RUN_MIGRATIONS: "true"
       LOG_DIR: /logs
+      STORAGE_LOCAL_PATH: /media
     volumes:
       # Mount source so code and config changes apply with Gunicorn reload (development).
       - ./backend:/app
       - ./logs:/logs
+      - ./media_data:/media
     ports:
       - "5000:5000"
     depends_on:
@@ -64,4 +66,5 @@ services:
       start_period: 30s
 
 volumes:
+  media_data:
   postgres_data:

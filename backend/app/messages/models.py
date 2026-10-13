@@ -16,6 +16,13 @@ class Message(db.Entity):
     message_type = Required(str, max_len=50)
     body = Optional(str)
     media_url = Optional(str, max_len=2000)
+    provider_media_id = Optional(str, max_len=255)
+    storage_key = Optional(str, max_len=512)
+    media_mime_type = Optional(str, max_len=150)
+    media_filename = Optional(str, max_len=255)
+    media_size_bytes = Optional(int)
+    media_sha256 = Optional(str, max_len=64)
+    media_status = Optional(str, max_len=30)
     provider_message_id = Optional(str, max_len=255)
     status = Required(str, default="pending", max_len=50)
     sent_by_user = Optional("User")
@@ -35,7 +42,13 @@ class Message(db.Entity):
             "channel": self.channel,
             "message_type": self.message_type,
             "body": self.body,
-            "media_url": self.media_url,
+            "media_url": None if self.storage_key else self.media_url,
+            "has_private_media": bool(self.storage_key),
+            "media_mime_type": self.media_mime_type,
+            "media_filename": self.media_filename,
+            "media_size_bytes": self.media_size_bytes,
+            "media_status": self.media_status,
+            "media_download_path": f"/api/media/{self.id}" if self.storage_key else None,
             "provider_message_id": self.provider_message_id,
             "status": self.status,
             "sent_by_user_id": self.sent_by_user.id if self.sent_by_user else None,
