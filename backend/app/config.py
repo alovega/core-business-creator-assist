@@ -79,6 +79,7 @@ class BaseConfig:
     AWS_ACCESS_KEY_ID = ""
     AWS_SECRET_ACCESS_KEY = ""
     STORAGE_LOCAL_PATH = "uploads"
+    MEDIA_MAX_BYTES = 16777216
 
     FRONTEND_URL = ""
 
@@ -120,6 +121,7 @@ class BaseConfig:
         cls.AWS_ACCESS_KEY_ID = _env("AWS_ACCESS_KEY_ID")
         cls.AWS_SECRET_ACCESS_KEY = _env("AWS_SECRET_ACCESS_KEY")
         cls.STORAGE_LOCAL_PATH = _env("STORAGE_LOCAL_PATH", "uploads")
+        cls.MEDIA_MAX_BYTES = int(_env("MEDIA_MAX_BYTES", "16777216"))
 
         cls.FRONTEND_URL = _env("FRONTEND_URL")
         cls.LOG_DIR = _env("LOG_DIR", "logs")
