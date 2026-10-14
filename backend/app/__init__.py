@@ -16,6 +16,8 @@ load_dotenv()
 
 
 def register_blueprints(app: Flask) -> None:
+    from app.audit_logs import audit_logs_bp
+    from app.audit_logs import routes as _audit_routes  # noqa: F401
     from app.ai import ai_bp
     from app.ai import routes as _ai_routes  # noqa: F401
     from app.auth import auth_bp
@@ -60,6 +62,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(payments_bp)
     app.register_blueprint(automations_bp)
     app.register_blueprint(ai_bp)
+    app.register_blueprint(audit_logs_bp)
     from app.users import users_bp
     from app.users import routes as _user_routes  # noqa: F401
 

@@ -49,6 +49,7 @@ def bind_database(database_url: str) -> None:
 
 def generate_mapping(*, create_tables: bool = False, check_tables: bool = True) -> None:
     # Import entities so Pony registers them before mapping.
+    from app.audit_logs import models as _audit_log_models  # noqa: F401
     from app.automations import models as _automation_models  # noqa: F401
     from app.bookings import models as _booking_models  # noqa: F401
     from app.businesses import models as _business_models  # noqa: F401

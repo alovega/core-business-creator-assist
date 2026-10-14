@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask import g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session, select
 
 from app.automations.engine import dispatch_automation_event
@@ -228,6 +229,7 @@ def update_lead(lead_id: int):
     data = _json_body()
     if not data:
         return jsonify({"lead": lead.to_dict()}), 200
+    old_stage = lead.stage
 
     if "stage" in data:
         try:
@@ -277,6 +279,9 @@ def update_lead(lead_id: int):
 
     lead.updated_at = datetime.utcnow()
     commit()
+    record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                       action="lead_updated", resource_type="lead", resource_id=lead.id,
+                       metadata={"from_stage": old_stage, "to_stage": lead.stage})
     return jsonify({"lead": lead.to_dict()}), 200
 
 
@@ -305,4 +310,7 @@ def move_lead_stage(lead_id: int):
 
     lead.updated_at = datetime.utcnow()
     commit()
+    record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                       action="lead_updated", resource_type="lead", resource_id=lead.id,
+                       metadata={"from_stage": old_stage, "to_stage": lead.stage})
     return jsonify({"lead": lead.to_dict()}), 200

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from flask import g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session, select
 
 from app.common.rbac.decorators import business_required, login_required, permission_required
@@ -167,6 +168,9 @@ def conversation_messages(conversation_id: int):
         message.provider_message_id = send_whatsapp_message(message, recipient)
         message.status = "sent"
         commit()
+        record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                           action="message_sent", resource_type="message", resource_id=message.id,
+                           metadata={"channel": channel, "message_type": message_type})
     except WhatsAppSendError:
         message.status = "failed"
         commit()

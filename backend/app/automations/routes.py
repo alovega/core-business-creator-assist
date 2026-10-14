@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask import g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session, select
 
 from app.automations import automations_bp
@@ -375,6 +376,9 @@ def create_automation():
 
     automation = Automation(business=g.current_business, **values)
     commit()
+    record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                       action="automation_changed", resource_type="automation", resource_id=automation.id,
+                       metadata={"operation": "created"})
     return jsonify({"automation": automation.to_dict()}), 201
 
 
@@ -424,8 +428,12 @@ def delete_automation(automation_id: int):
         return jsonify({"error": "Automation not found"}), 404
     if automation.runs:
         return jsonify({"error": "Automation has run history; disable it instead"}), 409
+    removed_id = automation.id
     automation.delete()
     commit()
+    record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                       action="automation_changed", resource_type="automation", resource_id=removed_id,
+                       metadata={"operation": "deleted"})
     return "", 204
 
 

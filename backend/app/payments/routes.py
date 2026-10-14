@@ -2,6 +2,7 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from flask import g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session, desc, select
 
 from app.common.rbac.decorators import business_required, login_required, permission_required
@@ -234,6 +235,7 @@ def update_payment(payment_id: int):
     customer_id = payment.customer_id
     conversation = payment.conversation
     was_pending = payment.status == "pending"
+    old_status = payment.status
 
     try:
         if "customer_id" in data:
@@ -269,6 +271,10 @@ def update_payment(payment_id: int):
     payment.customer_id = customer_id
     payment.conversation = conversation
     commit()
+    if old_status != "paid" and payment.status == "paid":
+        record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                           action="payment_marked_paid", resource_type="payment", resource_id=payment.id,
+                           metadata={"from_status": old_status, "to_status": "paid"})
     
     if payment.status == "pending" and not was_pending:
         notify_payment_pending(payment)
@@ -291,6 +297,9 @@ def mark_payment_paid(payment_id: int):
         payment.confirmed_by_user = g.current_user
         payment.confirmed_at = datetime.utcnow()
         commit()
+        record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                           action="payment_marked_paid", resource_type="payment", resource_id=payment.id,
+                           metadata={"to_status": "paid"})
 
     return jsonify({"payment": payment.to_dict()}), 200
 

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from flask import g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session, select
 
 from app.automations.engine import dispatch_automation_event
@@ -237,6 +238,7 @@ def update_booking(booking_id: int):
     if not data:
         return jsonify({"booking": booking.to_dict()}), 200
 
+    old_status = booking.status
     customer_id = booking.customer_id
     conversation = booking.conversation
 
@@ -277,6 +279,10 @@ def update_booking(booking_id: int):
     booking.conversation = conversation
     booking.updated_at = datetime.utcnow()
     commit()
+    if old_status != "cancelled" and booking.status == "cancelled":
+        record_audit_event(business_id=g.current_business.id, user_id=g.current_user.id,
+                           action="booking_cancelled", resource_type="booking", resource_id=booking.id,
+                           metadata={"from_status": old_status, "to_status": "cancelled"})
     return jsonify({"booking": booking.to_dict()}), 200
 
 

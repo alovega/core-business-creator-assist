@@ -1,20 +1,4 @@
 # File & Media Handling — Change guide
-
-## Files
-
-- NEW `backend/app/media/services.py`: validates bytes and MIME, retrieves Meta media with a bearer token, private local/S3 storage, tenant-scoped reads.
-- NEW `backend/app/media/routes.py`: JWT/RBAC-protected `GET /api/media/<message_id>`.
-- NEW `backend/app/whatsapp/routes.py`: verified GET/POST `/api/whatsapp/webhook` with tenant lookup via `Business.settings_json.whatsapp_phone_number_id`.
-- NEW `backend/app/migrations/versions/1791900000_private_message_media.py`: additive message columns.
-- NEW `backend/app/media/tests/test_media_service.py`: storage/validation unit tests.
-- UPDATED `backend/app/messages/models.py`: media metadata serialization, safe internal download path.
-- UPDATED `backend/app/__init__.py`: imports and registers webhook/media routes.
-- UPDATED `backend/app/config.py`: `MEDIA_MAX_BYTES`.
-- UPDATED `backend/requirements.txt`: optional S3 driver boto3 (installed by requirements).
-- UPDATED `backend/.env.example`: media limit.
-- UPDATED `docker-compose.yml`: persistent private media volume `/media`.
-- UPDATED `.gitignore`: exclude local uploaded files.
-
 ## Setup
 
 1. `pip install -r backend/requirements.txt` (or rebuild Docker container).
