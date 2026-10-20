@@ -20,7 +20,13 @@ class Business(db.Entity):
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
     memberships = Set("BusinessMembership")
+    conversations = Set("Conversation")
+    messages = Set("Message")
+    leads = Set("Lead")
+    faq_entries = Set("FAQEntry")
+    auto_response_rules = Set("AutoResponseRule")
     current_users = Set("User", reverse="current_business")
+    customers = Set("Customer", reverse="business")
 
     def to_dict(self) -> dict:
         return {
@@ -53,6 +59,7 @@ class BusinessMembership(db.Entity):
     joined_at = Optional(datetime)
     created_at = Required(datetime, default=datetime.utcnow)
     updated_at = Required(datetime, default=datetime.utcnow)
+    assigned_conversations = Set("Conversation", reverse="assigned_to_membership")
 
     composite_index(user, business)
 
