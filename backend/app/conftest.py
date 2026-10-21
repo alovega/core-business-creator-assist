@@ -39,6 +39,18 @@ def clean_database():
             return
         clear_permission_cache()
         for table in (
+            "audit_logs",
+            "notifications",
+            "messages",
+            "payments",
+            "bookings",
+            "automation_runs",
+            "automations",
+            "auto_response_rules",
+            "faq_entries",
+            "leads",
+            "conversations",
+            "customers",
             "role_permissions",
             "business_memberships",
             "permissions",

@@ -1,4 +1,5 @@
 from flask import current_app, g, jsonify, request
+from app.audit_logs.services import record_audit_event
 from pony.orm import commit, db_session
 
 from app.auth import auth_bp
@@ -67,6 +68,8 @@ def register():
 
     ensure_default_current_business(user)
     commit()
+    record_audit_event(business_id=user.current_business_id, user_id=user.id, 
+                       action="login", resource_type="user", resource_id=user.id)
 
     token, _ = create_access_token(
         user.id,
@@ -110,6 +113,8 @@ def login():
 
     ensure_default_current_business(user)
     commit()
+    record_audit_event(business_id=user.current_business_id, user_id=user.id, 
+                       action="login", resource_type="user", resource_id=user.id)
 
     token, _ = create_access_token(
         user.id,
