@@ -3,6 +3,7 @@ from flask import Flask
 
 from app.common import health_bp
 from app.common.logging import setup_logging
+from app.common.responses import standardize_api_responses
 from app.config import (
     ConfigurationError,
     config_by_name,
@@ -98,5 +99,6 @@ def create_app(config_name: str | None = None) -> Flask:
     init_database(app)
 
     register_blueprints(app)
+    standardize_api_responses(app)
 
     return app

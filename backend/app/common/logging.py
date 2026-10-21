@@ -7,6 +7,7 @@ from pathlib import Path
 import structlog
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import HTTPException
+from app.common.responses import error_response, server_error
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 INFO_LOG_NAME = "info.log"
@@ -211,7 +212,7 @@ def register_request_and_error_logging(app: Flask) -> None:
     @app.errorhandler(Exception)
     def log_exception(exc: Exception):
         if isinstance(exc, HTTPException):
-            return exc
+            return error_response(exc.description if exc.code and exc.code < 500 else "Internal server error", exc.code or 500)
 
         http_logger.exception(
             "unhandled_exception",
@@ -219,9 +220,7 @@ def register_request_and_error_logging(app: Flask) -> None:
             method=request.method,
             path=request.path,
         )
-        if app.config.get("DEBUG"):
-            raise exc
-        return jsonify({"error": "Internal server error"}), 500
+        return server_error()
 
     app.extensions[_REQUEST_LOGGING_KEY] = True
 

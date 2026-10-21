@@ -410,13 +410,18 @@ def test_provider_failure_is_handled_gracefully(
 
     assert response.status_code == 503
 
-    assert response.get_json() == {
-        "error": (
-            "AI reply suggestion is "
-            "temporarily unavailable. "
-            "Please write the reply manually."
-        )
-    }
+    body = response.get_json()
+    expected_message = (
+        "AI reply suggestion is "
+        "temporarily unavailable. "
+        "Please write the reply manually."
+    )
+    assert body["success"] is False
+    assert body["message"] == expected_message
+    assert body["error"] == expected_message
+    assert body["code"] == "SERVICE_UNAVAILABLE"
+    assert body["data"] is None
+    assert body["details"] is None
 
 
 def test_conversation_from_another_business_is_not_accessible(

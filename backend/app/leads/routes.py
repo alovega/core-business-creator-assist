@@ -295,6 +295,7 @@ def move_lead_stage(lead_id: int):
     if lead is None:
         return jsonify({"error": "Lead not found"}), 404
 
+    old_stage = lead.stage
     data = _json_body()
     stage = data.get("stage")
     if stage is None:
