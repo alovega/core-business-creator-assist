@@ -74,12 +74,25 @@ def _receive_message(business, incoming, contacts):
                                     channel='whatsapp', contact_phone_number=sender)
     details = incoming.get(kind) or {}
     media_id = details.get('id') if kind in MEDIA_TYPES else None
-    message = Message(business=business, conversation=conversation, customer_id=customer.id,
-                      direction='incoming', channel='whatsapp', message_type=kind,
-                      provider_message_id=provider_id, body=details.get('body') if kind == 'text' else details.get('caption'),
-                      provider_media_id=media_id,
-                      media_filename=details.get('filename') if kind == 'document' else None,
-                      media_status='pending' if media_id else None, status='received')
+    message_fields = {
+        'business': business,
+        'conversation': conversation,
+        'customer_id': customer.id,
+        'direction': 'incoming',
+        'channel': 'whatsapp',
+        'message_type': kind,
+        'provider_message_id': provider_id,
+        'status': 'received',
+    }
+    body = details.get('body') if kind == 'text' else details.get('caption')
+    if body is not None:
+        message_fields['body'] = body
+    if media_id is not None:
+        message_fields['provider_media_id'] = media_id
+        message_fields['media_status'] = 'pending'
+    if kind == 'document' and details.get('filename') is not None:
+        message_fields['media_filename'] = details['filename']
+    message = Message(**message_fields)
     conversation.last_message_at = message.created_at
     conversation.updated_at = datetime.utcnow()
     conversation.unread_count += 1
