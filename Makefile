@@ -1,4 +1,4 @@
-.PHONY: help install env build up up-api down ensure-db test-db drop-test-db migrate create_migration test run celery health setup logs
+.PHONY: help install env build up up-api down ensure-db test-db drop-test-db migrate create_migration test run celery health setup logs docs docs-check
 
 VENV := .venv
 PYTHON := $(VENV)/bin/python
@@ -54,6 +54,13 @@ migrate: ## Apply pending Pony migrations
 create_migration: ## Create migration stub (usage: make create_migration name=add_users)
 	@test -n "$(name)" || (echo 'Usage: make create_migration name=describe_your_change' && exit 1)
 	cd $(BACKEND) && ../$(PYTHON) -m app.migrations.commands.create_migration "$(name)"
+
+docs: ## Regenerate the OpenAPI specification from Flask routes
+	python3 backend/scripts/generate_openapi.py
+
+docs-check: ## Check OpenAPI drift and examples (no services needed)
+	python3 backend/scripts/generate_openapi.py --check
+	python3 -m unittest discover -s backend/app/api_docs/tests -v
 
 test: install ## Run the test suite (in-memory SQLite; drops Postgres test DB if present)
 	@ec=0; (cd $(BACKEND) && ../$(PYTEST)) || ec=$$?; \

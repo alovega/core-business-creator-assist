@@ -17,6 +17,7 @@ load_dotenv()
 
 
 def register_blueprints(app: Flask) -> None:
+    from app.api_docs import api_docs_bp
     from app.audit_logs import audit_logs_bp
     from app.audit_logs import routes as _audit_routes  # noqa: F401
     from app.ai import ai_bp
@@ -49,6 +50,7 @@ def register_blueprints(app: Flask) -> None:
     from app.whatsapp import routes as _whatsapp_routes  # noqa: F401
 
     app.register_blueprint(health_bp)
+    app.register_blueprint(api_docs_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(businesses_bp)
     app.register_blueprint(customers_bp)

@@ -75,6 +75,10 @@ def standardize_api_responses(app):
 
     @app.after_request
     def standardize(response):
+        # OpenAPI is itself a JSON document, not an application API payload.
+        # Wrapping it in the usual success envelope breaks Swagger UI imports.
+        if request.path == "/api/openapi.json":
+            return response
         if not (request.path == "/api" or request.path.startswith("/api/")):
             return response
         if response.status_code in (204, 304) or not response.is_json:

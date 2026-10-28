@@ -64,6 +64,20 @@ curl -X POST http://127.0.0.1:5000/api/messages/<conversation_id> \\
 	-d '{"body":"Hello from the team"}'
 ```
 
+**Browse the API documentation**
+
+Once the API is running, open [Swagger UI](http://127.0.0.1:5000/api/docs) or import [OpenAPI JSON](http://127.0.0.1:5000/api/openapi.json) into Postman/Redoc. The reference covers authentication, business workspaces and membership permissions, customers, conversations, messages, leads, bookings, payments, Meta WhatsApp webhooks, and supporting endpoints.
+
+Generate and check the documentation from Flask route decorators:
+
+```bash
+make docs
+make docs-check
+```
+
+For frontend integration instructions, request/response envelopes, and documentation upkeep, see [`backend/app/api_docs/README.md`](backend/app/api_docs/README.md).
+
+
 **Run tests**
 
 ```bash
@@ -100,6 +114,8 @@ make down
 | `make run` | Start the Flask API |
 | `make celery` | Start the Celery worker |
 | `make health` | Call `GET /health` |
+| `make docs` | Regenerate OpenAPI JSON from backend routes |
+| `make docs-check` | Validate API-docs coverage and check for stale OpenAPI JSON |
 | `make logs` | Follow Docker Compose logs |
 
 ### Common tasks
